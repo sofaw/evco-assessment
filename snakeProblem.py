@@ -1,7 +1,5 @@
 # This code defines the agent (as in the playable version) in a way that can be called and executed from an evolutionary algorithm. The code is partial and will not execute. You need to add to the code to create an evolutionary algorithm that evolves and executes a snake agent.
 import curses
-import types
-
 import helperFunctions as hf
 import numpy
 import pygraphviz as pgv
@@ -9,7 +7,6 @@ import random
 import operator
 from functools import partial
 from deap import algorithms, base, creator, gp, tools
-from typing import Callable
 
 S_RIGHT, S_LEFT, S_UP, S_DOWN = 0, 1, 2, 3
 XSIZE, YSIZE = 14, 14
@@ -77,8 +74,39 @@ class SnakePlayer(list):
         return self.ahead in self.body
 
     # Additional functions:
-    def getCurrentDirection(self):
-        return self.direction
+    def sense_current_direction_up(self):
+        return self.direction == S_UP
+
+    def sense_current_direction_right(self):
+        return self.direction == S_RIGHT
+
+    def sense_current_direction_down(self):
+        return self.direction == S_DOWN
+
+    def sense_current_direction_left(self):
+        return self.direction == S_LEFT
+
+    def if_wall_ahead(self, out1, out2):
+        return partial(hf.if_then_else, self.sense_wall_ahead, out1, out2)
+
+    def if_food_ahead(self, out1, out2):
+        return partial(hf.if_then_else, self.sense_food_ahead, out1, out2)
+
+    def if_tail_ahead(self, out1, out2):
+        return partial(hf.if_then_else, self.sense_food_ahead, out1, out2)
+
+    def if_current_direction_up(self, out1, out2):
+        return partial(hf.if_then_else, self.sense_current_direction_up, out1, out2)
+
+    def if_current_direction_right(self, out1, out2):
+        return partial(hf.if_then_else, self.sense_current_direction_right, out1, out2)
+
+    def if_current_direction_down(self, out1, out2):
+        return partial(hf.if_then_else, self.sense_current_direction_down, out1, out2)
+
+    def if_current_direction_left(self, out1, out2):
+        return partial(hf.if_then_else, self.sense_current_direction_left, out1, out2)
+
 
 
 # This function places a food item in the environment
@@ -101,21 +129,18 @@ numGens = 40
 popSize = 100
 
 # GP primitives and terminals
-pset = gp.PrimitiveSetTyped("main", [int], types.FunctionType)
-pset.addPrimitive(hf.if_then_else, [bool, types.FunctionType, types.FunctionType], types.FunctionType)
-pset.addPrimitive(snake.sense_wall_ahead, [], bool)
-pset.addPrimitive(snake.sense_food_ahead, [], bool)
-pset.addPrimitive(snake.sense_tail_ahead, [], bool)
-pset.addPrimitive(operator.eq, [int, int], bool)
-pset.addTerminal(snake.changeDirectionUp, types.FunctionType)
-pset.addTerminal(snake.changeDirectionRight, types.FunctionType)
-pset.addTerminal(snake.changeDirectionDown, types.FunctionType)
-pset.addTerminal(snake.changeDirectionLeft, types.FunctionType)
-pset.addTerminal(S_UP, int)
-pset.addTerminal(S_RIGHT, int)
-pset.addTerminal(S_DOWN, int)
-pset.addTerminal(S_LEFT, int)
-pset.addTerminal(1, bool)
+pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
+pset.addPrimitive(snake.if_wall_ahead, 2)
+pset.addPrimitive(snake.if_food_ahead, 2)
+pset.addPrimitive(snake.if_tail_ahead, 2)
+pset.addPrimitive(snake.if_current_direction_up, 2)
+pset.addPrimitive(snake.if_current_direction_right, 2)
+pset.addPrimitive(snake.if_current_direction_down, 2)
+pset.addPrimitive(snake.if_current_direction_left, 2)
+pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
+pset.addTerminal(snake.changeDirectionRight)
+pset.addTerminal(snake.changeDirectionDown)
+pset.addTerminal(snake.changeDirectionLeft)
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
@@ -163,7 +188,7 @@ def displayStrategyRun(individual):
         win.getch()
 
         ## EXECUTE THE SNAKE'S BEHAVIOUR HERE ##
-        routine([snake.getCurrentDirection()])
+        routine()
 
         snake.updatePosition()
 
@@ -184,9 +209,9 @@ def displayStrategyRun(individual):
 
     curses.endwin()
 
-    #print(collided)
-    #print(hitBounds)
-    #raw_input("Press to continue...")
+    print collided
+    print hitBounds
+    raw_input("Press to continue...")
 
     return snake.score,
 
@@ -210,7 +235,7 @@ def runGame(individual):
     while not snake.snakeHasCollided() and not timer == XSIZE * YSIZE:
 
         ## EXECUTE THE SNAKE'S BEHAVIOUR HERE ##
-        routine([snake.getCurrentDirection()])
+        routine()
 
         snake.updatePosition()
 
@@ -229,7 +254,7 @@ def runGame(individual):
 
 ## MY CODE ##
 
-toolbox.register("evaluate", displayStrategyRun)
+toolbox.register("evaluate", runGame)
 toolbox.register("select", tools.selTournament, tournsize=7)
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
@@ -242,7 +267,7 @@ def main():
     global pset
 
     ## MY CODE ##
-    random.seed(10)
+    random.seed(1)
 
     pop = toolbox.population(n=popSize)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -254,10 +279,8 @@ def main():
     algorithms.eaSimple(pop, toolbox, 0.5, 0.2, numGens, stats)
 
     # Plot the best tree
-    #expr = tools.selBest(pop, 1)[0]
-    #displayStrategyRun(expr)
-    for expr in pop:
-        displayStrategyRun(expr)
+    expr = tools.selBest(pop, 1)[0]
+    displayStrategyRun(expr)
     nodes, edges, labels = gp.graph(expr)
 
     g = pgv.AGraph(nodeSep=1.0)
