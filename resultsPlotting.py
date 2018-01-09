@@ -45,6 +45,22 @@ def plot_box_and_whisker(runStats):
     plt.boxplot(genStats)
     plt.show()
 
+# Plot box and whisker for best sample from each population at each generation
+def plot_best_box_and_whisker(runStats):
+    numGens = len(runStats[0])
+    numRuns = len(runStats)
+
+    best = [None] * numRuns
+    for r in range(numRuns):
+        bestGens = [None] * numGens
+        for g in range(numGens):
+            bestGens[g] = max(runStats[r][g])
+        best[r] = bestGens
+    plt.boxplot(np.array(best))  # So boxplot uses columns
+    plt.show()
+
+
+
 def flatten_list(list):
     flat_list = []
     for sublist in list:
@@ -63,3 +79,4 @@ def preprocess_list(list):
 
 mydata = [[[1, 1], [1, 1], [1, 1]], [[2, 2], [2, 2], [2, 2]], [[3, 3], [3, 3], [3, 3], [3, 3]], [[4, 4], [4, 4], [4, 4]]]
 newdata = [[[1, 1], [2, 2], [3, 3]], [[1, 1], [2, 2], [3, 3]], [[1, 1], [2, 2], [3, 3]]]
+moredata = [[[1, 2, 3], [1, 2, 3]], [[4, 5, 6], [4, 5, 6]], [[2, 2, 2], [8, 8, 8]]] # 2 runs, 2 generations, popSize=3
