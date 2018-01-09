@@ -13,7 +13,7 @@ def plot_single_algorithm(runStats, pointFunction, errorFunction):
     numGen = len(runStats[0])
     #plt.axis(xmin=0, xmax=numGen, ymin=0, ymax=gameMax)
 
-    genStats = preprocess_stats(runStats)
+    genStats = preprocess_list(runStats)
     y = [None] * numGen
     error = [None] * numGen
     for g in range(numGen):
@@ -28,7 +28,7 @@ def plot_single_algorithm_iqr_error(runStats, pointFunction):
     numGen = len(runStats[0])
     #plt.axis(xmin=0, xmax=numGen, ymin=0, ymax=gameMax)
 
-    genStats = preprocess_stats(runStats)
+    genStats = preprocess_list(runStats)
     y = [None] * numGen
     error = [None] * numGen
     for g in range(numGen):
@@ -40,6 +40,11 @@ def plot_single_algorithm_iqr_error(runStats, pointFunction):
     plt.errorbar(x=x, y=y, yerr=np.array(error).T, capsize=10)
     plt.show()
 
+def plot_box_and_whisker(runStats):
+    genStats = preprocess_list(runStats)
+    plt.boxplot(genStats)
+    plt.show()
+
 def flatten_list(list):
     flat_list = []
     for sublist in list:
@@ -48,7 +53,7 @@ def flatten_list(list):
     return flat_list
 
 # Index fitnesses by generation and flatten
-def preprocess_stats(list):
+def preprocess_list(list):
     numGen = len(list[0])
     nonFlatGenStats = zip(*list)
     flatGenStats = [None] * numGen
@@ -56,5 +61,5 @@ def preprocess_stats(list):
         flatGenStats[g] = flatten_list(nonFlatGenStats[g])
     return flatGenStats
 
-
 mydata = [[[1, 1], [1, 1], [1, 1]], [[2, 2], [2, 2], [2, 2]], [[3, 3], [3, 3], [3, 3], [3, 3]], [[4, 4], [4, 4], [4, 4]]]
+newdata = [[[1, 1], [2, 2], [3, 3]], [[1, 1], [2, 2], [3, 3]], [[1, 1], [2, 2], [3, 3]]]
