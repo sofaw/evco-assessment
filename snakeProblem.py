@@ -1,17 +1,13 @@
 # This code defines the agent (as in the playable version) in a way that can be called and executed from an evolutionary algorithm. The code is partial and will not execute. You need to add to the code to create an evolutionary algorithm that evolves and executes a snake agent.
+import argparse
 import curses
-
-import scipy.stats
-
-import helperFunctions as hf
-import numpy as np
-import pygraphviz as pgv
 import random
-import resultsPlotting as rp
-import sys
-import operator
 from functools import partial
-from deap import algorithms, base, creator, gp, tools
+
+from deap import base, creator, gp, tools
+
+import additionalPrimitives as ap
+import resultsPlotting as rp
 
 S_RIGHT, S_LEFT, S_UP, S_DOWN = 0, 1, 2, 3
 XSIZE, YSIZE = 14, 14
@@ -45,7 +41,6 @@ class SnakePlayer(list):
         self.body.insert(0, self.ahead)
 
     ## You are free to define more sensing options to the snake
-
     def changeDirectionUp(self):
         self.direction = S_UP
 
@@ -79,39 +74,14 @@ class SnakePlayer(list):
         return self.ahead in self.body
 
     # Additional functions:
-    def sense_food_direction_left(self):
-        if len(self.food) == 0:
-            return False
-        return self.body[0][1] > self.food[0][1]
-    def sense_food_direction_right(self):
-        if len(self.food) == 0:
-            return False
-        return self.body[0][1] < self.food[0][1]
-    def sense_food_direction_up(self):
-        if len(self.food) == 0:
-            return False
-        return self.body[0][0] > self.food[0][0]
-    def sense_food_direction_down(self):
-        if len(self.food) == 0:
-            return False
-        return self.body[0][0] < self.food[0][0]
-    def if_food_left(self, out1, out2):
-        return partial(hf.if_then_else, self.sense_food_direction_left, out1, out2)
-    def if_food_right(self, out1, out2):
-        return partial(hf.if_then_else, self.sense_food_direction_right, out1, out2)
-    def if_food_up(self, out1, out2):
-        return partial(hf.if_then_else, self.sense_food_direction_up, out1, out2)
-    def if_food_down(self, out1, out2):
-        return partial(hf.if_then_else, self.sense_food_direction_down, out1, out2)
-
     def if_wall_ahead(self, out1, out2):
-        return partial(hf.if_then_else, self.sense_wall_ahead, out1, out2)
+        return partial(ap.if_then_else, self.sense_wall_ahead, out1, out2)
 
     def if_food_ahead(self, out1, out2):
-        return partial(hf.if_then_else, self.sense_food_ahead, out1, out2)
+        return partial(ap.if_then_else, self.sense_food_ahead, out1, out2)
 
     def if_tail_ahead(self, out1, out2):
-        return partial(hf.if_then_else, self.sense_food_ahead, out1, out2)
+        return partial(ap.if_then_else, self.sense_food_ahead, out1, out2)
 
 
 # This function places a food item in the environment
@@ -126,39 +96,6 @@ def placeFood(snake):
 
 
 snake = SnakePlayer()
-
-## MY CODE ##
-# Constants
-numRuns = 30
-numGens = 40
-popSize = 100
-CXPB = 0.25
-MUTPB = 0.25
-
-# GP primitives and terminals
-pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
-pset.addPrimitive(snake.if_wall_ahead, 2)
-pset.addPrimitive(snake.if_food_ahead, 2)
-pset.addPrimitive(snake.if_tail_ahead, 2)
-pset.addPrimitive(snake.if_food_up, 2)
-pset.addPrimitive(snake.if_food_right, 2)
-pset.addPrimitive(snake.if_food_down, 2)
-pset.addPrimitive(snake.if_food_left, 2)
-pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
-pset.addTerminal(snake.changeDirectionRight)
-pset.addTerminal(snake.changeDirectionDown)
-pset.addTerminal(snake.changeDirectionLeft)
-
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
-
-toolbox = base.Toolbox()
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)  # Each leaf has the same depth between min and max
-toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-toolbox.register("compile", gp.compile, pset=pset)
-
-## MY CODE ##
 
 # This outline function is the same as runGame (see below). However,
 # it displays the game graphically and thus runs slower
@@ -257,21 +194,52 @@ def runGame(individual):
         #totalScore += snake.score
 
     #return totalScore,
+
+    # TODO: If the snake didn't eat any food, give a higher score to those that got close to the food
+
+
     return snake.score,
 
 
-## MY CODE ##
+# Parameters
+numGens = 50
+popSize = 2000
+CXPB = 0.8
+MUTPB = 0.1
 
+# GP primitives and terminals
+pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
+pset.addPrimitive(snake.if_wall_ahead, 2)
+pset.addPrimitive(snake.if_food_ahead, 2)
+pset.addPrimitive(snake.if_tail_ahead, 2)
+#pset.addPrimitive(hf.prog2, 2)
+#pset.addPrimitive(hf.prog3, 3)
+pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
+pset.addTerminal(snake.changeDirectionRight)
+pset.addTerminal(snake.changeDirectionDown)
+pset.addTerminal(snake.changeDirectionLeft)
+
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
+
+toolbox = base.Toolbox()
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)  # Each leaf has the same depth between min and max
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+toolbox.register("compile", gp.compile, pset=pset)
 toolbox.register("evaluate", runGame)
 toolbox.register("select", tools.selTournament, tournsize=7)
 toolbox.register("mate", gp.cxOnePoint)
-toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=2)
+toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
-def runEvolution(randomSeed):
+
+# Performs a single run of the evolutionary algorithm given a randomSeed value
+# Returns the population at the final generation and a list of fitnesses at each generation
+def single_run(randomSeed):
     random.seed(randomSeed)
 
-    pop = toolbox.population(n=popSize) # pop is list of individuals
+    pop = toolbox.population(n=popSize)
 
     # Evaluate the entire population
     fitnesses = list(toolbox.map(toolbox.evaluate, pop))
@@ -289,8 +257,6 @@ def runEvolution(randomSeed):
 
     # Begin the evolution
     while g < numGens:
-        #print("-- Generation %i --" % g)
-
         # Select the next generation individuals
         offspring = toolbox.select(pop, len(pop))
         # Clone the selected individuals
@@ -327,51 +293,66 @@ def runEvolution(randomSeed):
 
     return pop, genFits
 
-## MY CODE ##
+def run_n_times(numRuns):
+    fitStats = [None] * numRuns  # Contains the fitnesses at each generation for each run of the algorithm
+    finalPops = [None] * numRuns  # Contains the final population for each run of the algorithm
+    for i in range(numRuns):
+        results = single_run(i)
+        finalPops[i] = results[0]
+        fitStats[i] = results[1]
+    return finalPops, fitStats
+
 
 def main():
     global snake
     global pset
 
+    parser = argparse.ArgumentParser(description='Run evolutionary algorithm to play snake for specified number of runs.')
+    parser.add_argument('--num_runs', type=int, nargs='?', default='1',
+                        help='The number of runs of the evolutionary algorithm to perform')
+    parser.add_argument('--plot_decision_graphs', type=int, nargs='?', default='0',
+                        help='Plot the decision graphs for the top n individuals from the final population of each '
+                             'run.')
+    parser.add_argument('--display_strategy_runs', type=int, nargs='?', default='0',
+                        help='Display the strategy for the top n individuals from the final population of each run.')
+    parser.add_argument('--plot_max_graph', type=bool, default=False,
+                        help='Plot the fitness of the best individual over all runs at each generation.')
+    parser.add_argument('--plot_box_and_whisker', type=bool, default=False,
+                        help='Plot box and whisker for each generation over all runs.')
+    args = parser.parse_args()
 
-    ## MY CODE ##
-    if "multiple_runs" in sys.argv:
-        runStats = [None] * numRuns
-        finalPops = [None] * numRuns
+    # Run the algorithm
+    numRuns = args.num_runs
+    print "Running ", numRuns, " time(s)..."
+    finalPops, fitStats = run_n_times(numRuns)
+
+    # Print decision graphs
+    numDecisionGraphs = args.plot_decision_graphs
+    if numDecisionGraphs > 0:
+        # For each run, print decision graphs for top 'numDecisionGraphs' individuals in final population
         for i in range(numRuns):
-            results = runEvolution(i)
-            finalPops[i] = results[0]
-            runStats[i] = results[1]
-        rp.plot_best_box_and_whisker(runStats)
+            top_n = tools.selBest(finalPops[i], numDecisionGraphs)
+            for j in range(numDecisionGraphs):
+                filename = "decision/run_" + str(i) + "_num_" + str(j) + ".pdf"
+                rp.plot_decision_graph(top_n[j], filename)
 
-    else:
-        results = runEvolution(10)
-        pop = results[0]
-        #for ind in pop:
-        #    displayStrategyRun(ind)
-        #genStats = results[1]
-
-        #for s in genStats:
-        #    print s.median
-
-        # Plot the best tree
-        #expr = tools.selBest(pop, 1)[0]
-        for ind in pop:
-            displayStrategyRun(ind)
-        nodes, edges, labels = gp.graph(expr)
-
-        g = pgv.AGraph(nodeSep=1.0)
-        g.add_nodes_from(nodes)
-        g.add_edges_from(edges)
-        g.layout(prog="dot")
-        for i in nodes:
-            n = g.get_node(i)
-            n.attr["label"] = labels[i]
-        g.draw("snake_tree.pdf")
+    # Display strategies
+    numStrategyRuns = args.display_strategy_runs
+    if numStrategyRuns > 0:
+        # For each run, display strategy for top 'numStrategyRuns' individuals in final population
+        for i in range(numRuns):
+            top_n = tools.selBest(finalPops[i], numStrategyRuns)
+            for j in range(numStrategyRuns):
+                displayStrategyRun(top_n[j])
 
 
-## THIS IS WHERE YOUR CORE EVOLUTIONARY ALGORITHM WILL GO #
+    # Plot the fitness value of the best individual over all runs at each generation
+    if args.plot_max_graph:
+        rp.plot_best(fitStats)
+
+    # Plot box and whisker for best individual from each population at each generation
+    if args.plot_box_and_whisker:
+        rp.plot_best_box_and_whisker(fitStats)
 
 
 main()
-

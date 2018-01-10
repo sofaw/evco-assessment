@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pygraphviz as pgv
+from deap import gp
 
 gameMax = 185
 
@@ -59,7 +61,7 @@ def plot_best_box_and_whisker(runStats):
     plt.boxplot(np.array(best))  # So boxplot uses columns
     plt.show()
 
-
+# Plot the fitness value of the best individual over all runs at each generation
 def plot_best(runStats):
     genStats = preprocess_list(runStats)
     best = select_best(genStats)
@@ -90,6 +92,20 @@ def preprocess_list(list):
     for g in range(numGen):
         flatGenStats[g] = flatten_list(nonFlatGenStats[g])
     return flatGenStats
+
+
+def plot_decision_graph(individual, filename="snake_tree.pdf"):
+    nodes, edges, labels = gp.graph(individual)
+
+    g = pgv.AGraph(nodesep=3.0, fontsize=5)
+    g.add_nodes_from(nodes)
+    g.add_edges_from(edges)
+    g.layout(prog="dot")
+    for i in nodes:
+        n = g.get_node(i)
+        n.attr["label"] = labels[i]
+    g.draw(filename)
+
 
 mydata = [[[1, 1], [1, 1], [1, 1]], [[2, 2], [2, 2], [2, 2]], [[3, 3], [3, 3], [3, 3], [3, 3]], [[4, 4], [4, 4], [4, 4]]]
 newdata = [[[1, 1], [2, 2], [3, 3]], [[1, 1], [2, 2], [3, 3]], [[1, 1], [2, 2], [3, 3]]]
