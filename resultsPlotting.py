@@ -60,6 +60,20 @@ def plot_best_box_and_whisker(runStats):
     plt.show()
 
 
+def plot_best(runStats):
+    genStats = preprocess_list(runStats)
+    best = select_best(genStats)
+    x = np.arange(1, len(genStats) + 1, 1)
+    plt.plot(x, best, marker='o')
+    plt.show()
+
+
+def select_best(genStats):
+    best = [None] * len(genStats)
+    for i in range(len(genStats)):
+        best[i] = max(genStats[i])
+    return best
+
 
 def flatten_list(list):
     flat_list = []
@@ -80,3 +94,5 @@ def preprocess_list(list):
 mydata = [[[1, 1], [1, 1], [1, 1]], [[2, 2], [2, 2], [2, 2]], [[3, 3], [3, 3], [3, 3], [3, 3]], [[4, 4], [4, 4], [4, 4]]]
 newdata = [[[1, 1], [2, 2], [3, 3]], [[1, 1], [2, 2], [3, 3]], [[1, 1], [2, 2], [3, 3]]]
 moredata = [[[1, 2, 3], [1, 2, 3]], [[4, 5, 6], [4, 5, 6]], [[2, 2, 2], [8, 8, 8]]] # 2 runs, 2 generations, popSize=3
+
+plot_best(moredata)
