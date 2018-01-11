@@ -83,6 +83,31 @@ class SnakePlayer(list):
     def if_tail_ahead(self, out1, out2):
         return partial(ap.if_then_else, self.sense_food_ahead, out1, out2)
 
+    def sense_food_direction_left(self):
+        if len(self.food) == 0:
+            return False
+        return self.body[0][1] > self.food[0][1]
+    def sense_food_direction_right(self):
+        if len(self.food) == 0:
+            return False
+        return self.body[0][1] < self.food[0][1]
+    def sense_food_direction_up(self):
+        if len(self.food) == 0:
+            return False
+        return self.body[0][0] > self.food[0][0]
+    def sense_food_direction_down(self):
+        if len(self.food) == 0:
+            return False
+        return self.body[0][0] < self.food[0][0]
+    def if_food_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_food_direction_left, out1, out2)
+    def if_food_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_food_direction_right, out1, out2)
+    def if_food_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_food_direction_up, out1, out2)
+    def if_food_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_food_direction_down, out1, out2)
+
 
 # This function places a food item in the environment
 def placeFood(snake):
@@ -157,7 +182,7 @@ def displayStrategyRun(individual):
     #print hitBounds
     raw_input("Press to continue...")
 
-    return snake.score,
+    return snake.score
 
 
 # This outline function provides partial code for running the game with an evolved agent
@@ -176,6 +201,7 @@ def runGame(individual):
     snake._reset()
     food = placeFood(snake)
     timer = 0
+    time_alive = 0
     while not snake.snakeHasCollided() and not timer == XSIZE * YSIZE:
 
         ## EXECUTE THE SNAKE'S BEHAVIOUR HERE ##
@@ -187,31 +213,37 @@ def runGame(individual):
             snake.score += 1
             food = placeFood(snake)
             timer = 0
+            time_alive += 1
         else:
             snake.body.pop()
             timer += 1  # timesteps since last eaten
+            time_alive += 1
 
         #totalScore += snake.score
 
     #return totalScore,
 
-    # TODO: If the snake didn't eat any food, give a higher score to those that got close to the food
+    # Give higher fitness when snake is close to food
+    dist_to_food = abs(snake.body[0][0] - snake.food[0][0]) + abs(snake.body[0][1] - snake.food[0][1])
 
-
-    return snake.score,
+    return snake.score - 0.1*dist_to_food + 0.1*time_alive,
 
 
 # Parameters
 numGens = 50
 popSize = 2000
-CXPB = 0.8
-MUTPB = 0.1
+CXPB = 0.6
+MUTPB = 0.2
 
 # GP primitives and terminals
 pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
 pset.addPrimitive(snake.if_wall_ahead, 2)
 pset.addPrimitive(snake.if_food_ahead, 2)
 pset.addPrimitive(snake.if_tail_ahead, 2)
+pset.addPrimitive(snake.if_food_up, 2)
+pset.addPrimitive(snake.if_food_right, 2)
+pset.addPrimitive(snake.if_food_down, 2)
+pset.addPrimitive(snake.if_food_left, 2)
 #pset.addPrimitive(hf.prog2, 2)
 #pset.addPrimitive(hf.prog3, 3)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
@@ -223,14 +255,13 @@ creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)  # Each leaf has the same depth between min and max
+toolbox.register("expr_init", gp.genHalfAndHalf, pset=pset, min_=1, max_=5)
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-toolbox.register("compile", gp.compile, pset=pset)
 toolbox.register("evaluate", runGame)
-toolbox.register("select", tools.selTournament, tournsize=7)
+toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.2, fitness_first=True)
 toolbox.register("mate", gp.cxOnePoint)
-toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
+toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 
