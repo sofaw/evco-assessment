@@ -99,24 +99,25 @@ class SnakePlayer(list):
         if len(self.food) == 0:
             return False
         return self.body[0][0] < self.food[0][0]
+
     def sense_tail_up(self):
         for i in range(1, len(self.body)):
-            if self.body[0][0] > self.body[i][0]:
+            if (self.body[0][0] == (self.body[i][0] + 1)) and (self.body[0][1] == self.body[i][1]):
                 return True
         return False
     def sense_tail_right(self):
         for i in range(1, len(self.body)):
-            if self.body[0][1] < self.body[i][1]:
+            if (self.body[0][0] == self.body[i][0]) and (self.body[0][1] == self.body[i][1] - 1):
                 return True
         return False
     def sense_tail_down(self):
         for i in range(1, len(self.body)):
-            if self.body[0][0] < self.body[i][0]:
+            if (self.body[0][0] == (self.body[i][0] - 1)) and (self.body[0][1] == self.body[i][1]):
                 return True
         return False
     def sense_tail_left(self):
         for i in range(1, len(self.body)):
-            if self.body[0][0] > self.body[i][0]:
+            if (self.body[0][0] == self.body[i][0]) and (self.body[0][1] == self.body[i][1] + 1):
                 return True
         return False
     def if_tail_up(self, out1, out2):
@@ -128,6 +129,31 @@ class SnakePlayer(list):
     def if_tail_left(self, out1, out2):
         return partial(ap.if_then_else, self.sense_tail_left, out1, out2)
 
+    def sense_wall_up(self):
+        if self.body[0][0] == 1:
+                return True
+        return False
+    def sense_wall_right(self):
+        if self.body[0][1] == (XSIZE - 2):
+                return True
+        return False
+    def sense_wall_down(self):
+        if self.body[0][0] == (YSIZE - 2):
+                return True
+        return False
+    def sense_wall_left(self):
+        if self.body[0][1] == (1):
+                return True
+        return False
+    def if_wall_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_wall_up, out1, out2)
+    def if_wall_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_wall_right, out1, out2)
+    def if_wall_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_wall_down, out1, out2)
+    def if_wall_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_wall_left, out1, out2)
+
     def if_food_left(self, out1, out2):
         return partial(ap.if_then_else, self.sense_food_direction_left, out1, out2)
     def if_food_right(self, out1, out2):
@@ -136,6 +162,23 @@ class SnakePlayer(list):
         return partial(ap.if_then_else, self.sense_food_direction_up, out1, out2)
     def if_food_down(self, out1, out2):
         return partial(ap.if_then_else, self.sense_food_direction_down, out1, out2)
+    def sense_current_direction_up(self):
+        return self.direction == S_UP
+    def sense_current_direction_right(self):
+        return self.direction == S_RIGHT
+    def sense_current_direction_down(self):
+        return self.direction == S_DOWN
+    def sense_current_direction_left(self):
+        return self.direction == S_LEFT
+
+    def if_direction_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_current_direction_left, out1, out2)
+    def if_direction_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_current_direction_right, out1, out2)
+    def if_direction_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_current_direction_up, out1, out2)
+    def if_direction_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_current_direction_down, out1, out2)
 
 
 # This function places a food item in the environment
@@ -225,12 +268,11 @@ def runGame(individual):
 
     routine = gp.compile(individual, pset)
 
-    #totalScore = 0
+    totalScore = 0
 
     snake._reset()
     food = placeFood(snake)
     timer = 0
-    time_alive = 0
     while not snake.snakeHasCollided() and not timer == XSIZE * YSIZE:
 
         ## EXECUTE THE SNAKE'S BEHAVIOUR HERE ##
@@ -242,38 +284,49 @@ def runGame(individual):
             snake.score += 1
             food = placeFood(snake)
             timer = 0
-            time_alive += 1
         else:
             snake.body.pop()
             timer += 1  # timesteps since last eaten
-            time_alive += 1
 
-        #totalScore += snake.score
+        totalScore += snake.score
 
     #return totalScore,
 
-    return snake.score + 0.1*time_alive,
+    return snake.score
+
+def evalSnake(individual):
+    totalScore = 0
+    for i in range(4):
+        totalScore += runGame(individual)
+    return (totalScore/4),
 
 
 # Parameters
-numGens = 50
+numGens = 100
 popSize = 2000
 CXPB = 0.6
 MUTPB = 0.2
 
 # GP primitives and terminals
 pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
-pset.addPrimitive(snake.if_wall_ahead, 2)
-pset.addPrimitive(snake.if_food_ahead, 2)
-pset.addPrimitive(snake.if_tail_ahead, 2)
+#pset.addPrimitive(snake.if_wall_ahead, 2)
+#pset.addPrimitive(snake.if_tail_ahead, 2)
+#pset.addPrimitive(snake.if_direction_up, 2)
+#pset.addPrimitive(snake.if_direction_right, 2)
+#pset.addPrimitive(snake.if_direction_down, 2)
+#pset.addPrimitive(snake.if_direction_left, 2)
 pset.addPrimitive(snake.if_food_up, 2)
 pset.addPrimitive(snake.if_food_right, 2)
-pset.addPrimitive(snake.if_food_down, 2)
-pset.addPrimitive(snake.if_food_left, 2)
+#pset.addPrimitive(snake.if_food_down, 2)
+#pset.addPrimitive(snake.if_food_left, 2)
 pset.addPrimitive(snake.if_tail_up, 2)
 pset.addPrimitive(snake.if_tail_right, 2)
 pset.addPrimitive(snake.if_tail_down, 2)
 pset.addPrimitive(snake.if_tail_left, 2)
+pset.addPrimitive(snake.if_wall_up, 2)
+pset.addPrimitive(snake.if_wall_right, 2)
+pset.addPrimitive(snake.if_wall_down, 2)
+pset.addPrimitive(snake.if_wall_left, 2)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
@@ -283,11 +336,11 @@ creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
-toolbox.register("expr_init", gp.genHalfAndHalf, pset=pset, min_=1, max_=5)
+toolbox.register("expr_init", gp.genHalfAndHalf, pset=pset, min_=1, max_=8)
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-toolbox.register("evaluate", runGame)
-toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.3, fitness_first=True)
+toolbox.register("evaluate", evalSnake)
+toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.2, fitness_first=True)
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
