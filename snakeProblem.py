@@ -99,6 +99,35 @@ class SnakePlayer(list):
         if len(self.food) == 0:
             return False
         return self.body[0][0] < self.food[0][0]
+    def sense_tail_up(self):
+        for i in range(1, len(self.body)):
+            if self.body[0][0] > self.body[i][0]:
+                return True
+        return False
+    def sense_tail_right(self):
+        for i in range(1, len(self.body)):
+            if self.body[0][1] < self.body[i][1]:
+                return True
+        return False
+    def sense_tail_down(self):
+        for i in range(1, len(self.body)):
+            if self.body[0][0] < self.body[i][0]:
+                return True
+        return False
+    def sense_tail_left(self):
+        for i in range(1, len(self.body)):
+            if self.body[0][0] > self.body[i][0]:
+                return True
+        return False
+    def if_tail_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_tail_up, out1, out2)
+    def if_tail_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_tail_right, out1, out2)
+    def if_tail_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_tail_down, out1, out2)
+    def if_tail_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_tail_left, out1, out2)
+
     def if_food_left(self, out1, out2):
         return partial(ap.if_then_else, self.sense_food_direction_left, out1, out2)
     def if_food_right(self, out1, out2):
@@ -223,9 +252,7 @@ def runGame(individual):
 
     #return totalScore,
 
-    time_alive_weight = 1.0
-
-    return snake.score + time_alive_weight*time_alive,
+    return snake.score + 0.1*time_alive,
 
 
 # Parameters
@@ -243,6 +270,10 @@ pset.addPrimitive(snake.if_food_up, 2)
 pset.addPrimitive(snake.if_food_right, 2)
 pset.addPrimitive(snake.if_food_down, 2)
 pset.addPrimitive(snake.if_food_left, 2)
+pset.addPrimitive(snake.if_tail_up, 2)
+pset.addPrimitive(snake.if_tail_right, 2)
+pset.addPrimitive(snake.if_tail_down, 2)
+pset.addPrimitive(snake.if_tail_left, 2)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
