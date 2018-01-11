@@ -223,10 +223,9 @@ def runGame(individual):
 
     #return totalScore,
 
-    # Give higher fitness when snake is close to food
-    dist_to_food = abs(snake.body[0][0] - snake.food[0][0]) + abs(snake.body[0][1] - snake.food[0][1])
+    time_alive_weight = 1.0
 
-    return snake.score - 0.1*dist_to_food + 0.1*time_alive,
+    return snake.score + time_alive_weight*time_alive,
 
 
 # Parameters
@@ -244,8 +243,6 @@ pset.addPrimitive(snake.if_food_up, 2)
 pset.addPrimitive(snake.if_food_right, 2)
 pset.addPrimitive(snake.if_food_down, 2)
 pset.addPrimitive(snake.if_food_left, 2)
-#pset.addPrimitive(hf.prog2, 2)
-#pset.addPrimitive(hf.prog3, 3)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
@@ -259,7 +256,7 @@ toolbox.register("expr_init", gp.genHalfAndHalf, pset=pset, min_=1, max_=5)
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", runGame)
-toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.2, fitness_first=True)
+toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.3, fitness_first=True)
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
