@@ -171,6 +171,24 @@ class SnakePlayer(list):
     def sense_current_direction_left(self):
         return self.direction == S_LEFT
 
+    def sense_danger_up(self):
+        return (self.sense_wall_up() or self.sense_tail_up())
+    def sense_danger_right(self):
+        return (self.sense_wall_right() or self.sense_tail_right())
+    def sense_danger_down(self):
+        return (self.sense_wall_down() or self.sense_tail_down())
+    def sense_danger_left(self):
+        return (self.sense_wall_left() or self.sense_tail_left())
+
+    def if_danger_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_up, out1, out2)
+    def if_danger_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_right, out1, out2)
+    def if_danger_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_down, out1, out2)
+    def if_danger_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_left, out1, out2)
+
     def if_direction_left(self, out1, out2):
         return partial(ap.if_then_else, self.sense_current_direction_left, out1, out2)
     def if_direction_right(self, out1, out2):
@@ -302,7 +320,7 @@ def evalSnake(individual):
 
 
 # Parameters
-numGens = 100
+numGens = 150
 popSize = 2000
 CXPB = 0.6
 MUTPB = 0.2
@@ -319,14 +337,18 @@ pset.addPrimitive(snake.if_food_up, 2)
 pset.addPrimitive(snake.if_food_right, 2)
 #pset.addPrimitive(snake.if_food_down, 2)
 #pset.addPrimitive(snake.if_food_left, 2)
-pset.addPrimitive(snake.if_tail_up, 2)
-pset.addPrimitive(snake.if_tail_right, 2)
-pset.addPrimitive(snake.if_tail_down, 2)
-pset.addPrimitive(snake.if_tail_left, 2)
-pset.addPrimitive(snake.if_wall_up, 2)
-pset.addPrimitive(snake.if_wall_right, 2)
-pset.addPrimitive(snake.if_wall_down, 2)
-pset.addPrimitive(snake.if_wall_left, 2)
+#pset.addPrimitive(snake.if_tail_up, 2)
+#pset.addPrimitive(snake.if_tail_right, 2)
+#pset.addPrimitive(snake.if_tail_down, 2)
+#pset.addPrimitive(snake.if_tail_left, 2)
+#pset.addPrimitive(snake.if_wall_up, 2)
+#pset.addPrimitive(snake.if_wall_right, 2)
+#pset.addPrimitive(snake.if_wall_down, 2)
+#pset.addPrimitive(snake.if_wall_left, 2)
+pset.addPrimitive(snake.if_danger_up, 2)
+pset.addPrimitive(snake.if_danger_right, 2)
+pset.addPrimitive(snake.if_danger_down, 2)
+pset.addPrimitive(snake.if_danger_left, 2)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
@@ -340,7 +362,7 @@ toolbox.register("expr_init", gp.genHalfAndHalf, pset=pset, min_=1, max_=8)
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", evalSnake)
-toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.2, fitness_first=True)
+toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.3, fitness_first=True)
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
