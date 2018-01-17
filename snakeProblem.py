@@ -1,9 +1,11 @@
-# This code defines the agent (as in the playable version) in a way that can be called and executed from an evolutionary algorithm. The code is partial and will not execute. You need to add to the code to create an evolutionary algorithm that evolves and executes a snake agent.
 import argparse
 import curses
+import operator
 import random
+import pickle
 from functools import partial
 
+import numpy as np
 from deap import base, creator, gp, tools
 
 import additionalPrimitives as ap
@@ -82,6 +84,12 @@ class SnakePlayer(list):
 
     def if_tail_ahead(self, out1, out2):
         return partial(ap.if_then_else, self.sense_food_ahead, out1, out2)
+
+    def sense_danger_ahead(self):
+        return self.sense_wall_ahead() or self.sense_tail_ahead()
+
+    def if_danger_ahead(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_ahead, out1, out2)
 
     def sense_food_direction_left(self):
         if len(self.food) == 0:
@@ -198,6 +206,76 @@ class SnakePlayer(list):
     def if_direction_down(self, out1, out2):
         return partial(ap.if_then_else, self.sense_current_direction_down, out1, out2)
 
+    def sense_tail_two_up(self):
+        for i in range(1, len(self.body)):
+            if (self.body[0][0] == (self.body[i][0] + 2)) and (self.body[0][1] == self.body[i][1]):
+                return True
+        return False
+    def sense_tail_two_right(self):
+        for i in range(1, len(self.body)):
+            if (self.body[0][0] == self.body[i][0]) and (self.body[0][1] == self.body[i][1] - 2):
+                return True
+        return False
+    def sense_tail_two_down(self):
+        for i in range(1, len(self.body)):
+            if (self.body[0][0] == (self.body[i][0] - 2)) and (self.body[0][1] == self.body[i][1]):
+                return True
+        return False
+    def sense_tail_two_left(self):
+        for i in range(1, len(self.body)):
+            if (self.body[0][0] == self.body[i][0]) and (self.body[0][1] == self.body[i][1] + 2):
+                return True
+        return False
+    def if_tail_two_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_tail_two_up, out1, out2)
+    def if_tail_two_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_tail_two_right, out1, out2)
+    def if_tail_two_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_tail_two_down, out1, out2)
+    def if_tail_two_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_tail_two_left, out1, out2)
+
+    def sense_wall_two_up(self):
+        if self.body[0][0] == 2:
+            return True
+        return False
+    def sense_wall_two_right(self):
+        if self.body[0][1] == (XSIZE - 3):
+            return True
+        return False
+    def sense_wall_two_down(self):
+        if self.body[0][0] == (YSIZE - 3):
+            return True
+        return False
+    def sense_wall_two_left(self):
+        if self.body[0][1] == 2:
+            return True
+        return False
+    def if_wall_two_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_wall_two_up, out1, out2)
+    def if_wall_two_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_wall_two_right, out1, out2)
+    def if_wall_two_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_wall_two_down, out1, out2)
+    def if_wall_two_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_wall_two_left, out1, out2)
+    def sense_danger_two_up(self):
+        return (self.sense_wall_two_up() or self.sense_tail_two_up())
+    def sense_danger_two_right(self):
+        return (self.sense_wall_two_right() or self.sense_tail_two_right())
+    def sense_danger_two_down(self):
+        return (self.sense_wall_two_down() or self.sense_tail_two_down())
+    def sense_danger_two_left(self):
+        return (self.sense_wall_two_left() or self.sense_tail_two_left())
+
+    def if_danger_two_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_two_up, out1, out2)
+    def if_danger_two_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_two_right, out1, out2)
+    def if_danger_two_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_two_down, out1, out2)
+    def if_danger_two_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_danger_left, out1, out2)
 
 # This function places a food item in the environment
 def placeFood(snake):
@@ -314,21 +392,23 @@ def runGame(individual):
 
 def evalSnake(individual):
     totalScore = 0
-    for i in range(4):
+    numToAvg = 4
+    for i in range(numToAvg):
         totalScore += runGame(individual)
-    return (totalScore/4),
+    return (totalScore/numToAvg),
 
 
 # Parameters
-numGens = 150
-popSize = 2000
-CXPB = 0.6
-MUTPB = 0.2
+numGens = 40
+popSize = 500
+CXPB = 0.9
+MUTPB = 0.02
 
 # GP primitives and terminals
 pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
 #pset.addPrimitive(snake.if_wall_ahead, 2)
 #pset.addPrimitive(snake.if_tail_ahead, 2)
+#pset.addPrimitive(snake.if_danger_ahead, 2)
 #pset.addPrimitive(snake.if_direction_up, 2)
 #pset.addPrimitive(snake.if_direction_right, 2)
 #pset.addPrimitive(snake.if_direction_down, 2)
@@ -349,6 +429,10 @@ pset.addPrimitive(snake.if_danger_up, 2)
 pset.addPrimitive(snake.if_danger_right, 2)
 pset.addPrimitive(snake.if_danger_down, 2)
 pset.addPrimitive(snake.if_danger_left, 2)
+#pset.addPrimitive(snake.if_danger_two_up, 2)
+#pset.addPrimitive(snake.if_danger_two_right, 2)
+#pset.addPrimitive(snake.if_danger_two_down, 2)
+#pset.addPrimitive(snake.if_danger_two_left, 2)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
@@ -358,15 +442,19 @@ creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
-toolbox.register("expr_init", gp.genHalfAndHalf, pset=pset, min_=1, max_=8)
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=2, max_=8)
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", evalSnake)
 toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.3, fitness_first=True)
-toolbox.register("mate", gp.cxOnePoint)
-toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=3)
+toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
+#toolbox.register("mate", gp.cxOnePoint)
+toolbox.register("expr_mut", gp.genFull, min_=0, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
+MAX_HEIGHT = 10
+toolbox.decorate("mate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+toolbox.decorate("mutate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
 
 # Performs a single run of the evolutionary algorithm given a randomSeed value
 # Returns the population at the final generation and a list of fitnesses at each generation
@@ -374,21 +462,27 @@ def single_run(randomSeed):
     random.seed(randomSeed)
 
     pop = toolbox.population(n=popSize)
+    hof = tools.HallOfFame(1)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean)
+    stats.register("std", np.std)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
+
+    logbook = tools.Logbook()
+    logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
     # Evaluate the entire population
     fitnesses = list(toolbox.map(toolbox.evaluate, pop))
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
 
-    # Extracting all the fitnesses of
-    fits = [ind.fitness.values[0] for ind in pop]
+    hof.update(pop)
+    record = stats.compile(pop)
+    logbook.record(gen=0, evals=len(pop), **record)
+    print(logbook.stream)
 
-    # Variable keeping track of the number of generations
-    g = 0
-
-    # Variable containing statistics for each generation
-    genFits = [None] * numGens
-
+    g = 1
     # Begin the evolution
     while g < numGens:
         # Select the next generation individuals
@@ -414,27 +508,28 @@ def single_run(randomSeed):
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
-        pop[:] = offspring
+        pop = offspring
+        hof.update(pop)
+        record = stats.compile(pop)
+        logbook.record(gen=g, evals=len(invalid_ind), **record)
+        print(logbook.stream)
 
-        # Gather all the fitnesses in one list
-        fits = [ind.fitness.values[0] for ind in pop]
-
-        # Save fitnesses at each generation for plotting
-        genFits[g] = fits
-
-        # A new generation
         g = g + 1
 
-    return pop, genFits
+    return pop, stats, logbook, hof
 
 def run_n_times(numRuns):
-    fitStats = [None] * numRuns  # Contains the fitnesses at each generation for each run of the algorithm
-    finalPops = [None] * numRuns  # Contains the final population for each run of the algorithm
+    pops = [None] * numRuns  # Contains the final population for each run of the algorithm
+    stats = [None] * numRuns
+    logbooks = [None] * numRuns
+    hofs = [None] * numRuns
     for i in range(numRuns):
         results = single_run(i)
-        finalPops[i] = results[0]
-        fitStats[i] = results[1]
-    return finalPops, fitStats
+        pops[i] = results[0]
+        stats[i] = results[1]
+        logbooks[i] = results[2]
+        hofs[i] = results[3]
+    return pops, stats, logbooks, hofs
 
 
 def main():
@@ -449,23 +544,25 @@ def main():
                              'run.')
     parser.add_argument('--display_strategy_runs', type=int, nargs='?', default='0',
                         help='Display the strategy for the top n individuals from the final population of each run.')
-    parser.add_argument('--plot_max_graph', type=bool, default=False,
-                        help='Plot the fitness of the best individual over all runs at each generation.')
-    parser.add_argument('--plot_box_and_whisker', type=bool, default=False,
-                        help='Plot box and whisker for each generation over all runs.')
+    parser.add_argument('--save_logbook', type=str, default=False,
+                        help='Save the logbook to given path.')
     args = parser.parse_args()
 
     # Run the algorithm
     numRuns = args.num_runs
     print "Running ", numRuns, " time(s)..."
-    finalPops, fitStats = run_n_times(numRuns)
+    pops, stats, logbooks, hofs = run_n_times(numRuns)
+
+    # Save logbook
+    if len(args.save_logbook) > 0:
+        pickle.dump(logbooks, open(args.save_logbook, "wb"))
 
     # Print decision graphs
     numDecisionGraphs = args.plot_decision_graphs
     if numDecisionGraphs > 0:
         # For each run, print decision graphs for top 'numDecisionGraphs' individuals in final population
         for i in range(numRuns):
-            top_n = tools.selBest(finalPops[i], numDecisionGraphs)
+            top_n = tools.selBest(pops[i], numDecisionGraphs)
             for j in range(numDecisionGraphs):
                 filename = "decision/run_" + str(i) + "_num_" + str(j) + ".pdf"
                 rp.plot_decision_graph(top_n[j], filename)
@@ -475,18 +572,9 @@ def main():
     if numStrategyRuns > 0:
         # For each run, display strategy for top 'numStrategyRuns' individuals in final population
         for i in range(numRuns):
-            top_n = tools.selBest(finalPops[i], numStrategyRuns)
+            top_n = tools.selBest(pops[i], numStrategyRuns)
             for j in range(numStrategyRuns):
                 displayStrategyRun(top_n[j])
-
-
-    # Plot the fitness value of the best individual over all runs at each generation
-    if args.plot_max_graph:
-        rp.plot_best(fitStats)
-
-    # Plot box and whisker for best individual from each population at each generation
-    if args.plot_box_and_whisker:
-        rp.plot_best_box_and_whisker(fitStats)
 
 
 main()
