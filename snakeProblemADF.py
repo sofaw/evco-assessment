@@ -607,7 +607,7 @@ def main():
         for i in range(numRuns):
             top_n = tools.selBest(pops[i], numDecisionGraphs)
             for j in range(numDecisionGraphs):
-                filepath = "decision/run_" + str(i) + "_num_" + str(j)
+                filepath = "adf_decisions/run_" + str(i) + "_num_" + str(j)
                 for k in range(len(top_n[j])):
                     filename = filepath + "_" + str(k) + "_" + ".pdf"
                     rp.plot_decision_graph(top_n[j][k], filename)
