@@ -1,7 +1,10 @@
 # This code defines the agent (as in the playable version) in a way that can be called and executed from an evolutionary algorithm. The code is partial and will not execute. You need to add to the code to create an evolutionary algorithm that evolves and executes a snake agent.
 import argparse
 import curses
+import numpy as np
+import operator
 import random
+import pickle
 from functools import partial
 
 from deap import base, creator, gp, tools
@@ -296,7 +299,7 @@ def displayStrategyRun(individual):
     global snake
     global pset
 
-    routine = gp.compile(individual, pset)
+    routine = toolbox.compile(individual)
 
     curses.initscr()
     win = curses.newwin(YSIZE, XSIZE, 0, 0)
@@ -360,7 +363,7 @@ def runGame(individual):
     global snake
     global pset
 
-    routine = gp.compile(individual, pset)
+    routine = toolbox.compile(individual)
 
     totalScore = 0
 
@@ -397,12 +400,12 @@ def evalSnake(individual):
 
 
 # Parameters
-numGens = 100
+numGens = 45
 popSize = 500
 CXPB = 0.9
 MUTPB = 0.02
 
-adfset = gp.PrimitiveSet("adf", 0) # TODO: how many inputs to adf??
+adfset = gp.PrimitiveSet("adf", 2)
 adfset.addPrimitive(snake.if_danger_up, 2)
 adfset.addPrimitive(snake.if_danger_right, 2)
 adfset.addPrimitive(snake.if_danger_down, 2)
@@ -415,6 +418,10 @@ adfset.addPrimitive(snake.if_food_up, 2)
 adfset.addPrimitive(snake.if_food_right, 2)
 adfset.addPrimitive(snake.if_food_down, 2)
 adfset.addPrimitive(snake.if_food_left, 2)
+#adfset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
+#adfset.addTerminal(snake.changeDirectionRight)
+#adfset.addTerminal(snake.changeDirectionDown)
+#adfset.addTerminal(snake.changeDirectionLeft)
 
 
 # GP primitives and terminals
@@ -453,88 +460,119 @@ pset.addTerminal(snake.changeDirectionLeft)
 
 pset.addADF(adfset=adfset)
 
+psets = (pset, adfset)
+
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
+creator.create("Individual", list, fitness=creator.FitnessMax)
+#creator.create("adf", gp.PrimitiveTree, pset=adfset)
+#creator.create("main", gp.PrimitiveTree, pset=pset)
+creator.create("Tree", gp.PrimitiveTree)
 
 toolbox = base.Toolbox()
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=2, max_=8)
-toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
+toolbox.register("pset_expr", gp.genFull, pset=pset, min_=2, max_=5)
+toolbox.register("adf_expr", gp.genFull, pset=adfset, min_=2, max_=5)
+
+toolbox.register('adf', tools.initIterate, creator.Tree, toolbox.adf_expr)
+toolbox.register('main', tools.initIterate, creator.Tree, toolbox.pset_expr)
+
+func_cycle = [toolbox.main, toolbox.adf]
+
+toolbox.register('individual', tools.initCycle, creator.Individual, func_cycle)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+toolbox.register('compile', gp.compileADF, psets=psets)
 toolbox.register("evaluate", evalSnake)
-toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.3, fitness_first=True)
-toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
-#toolbox.register("mate", gp.cxOnePoint)
+toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.8, fitness_first=True)
+#toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
+toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genFull, min_=0, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
+
+MAX_HEIGHT = 10
+toolbox.decorate("mate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+toolbox.decorate("mutate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
 
 
 # Performs a single run of the evolutionary algorithm given a randomSeed value
 # Returns the population at the final generation and a list of fitnesses at each generation
 def single_run(randomSeed):
     random.seed(randomSeed)
+    ind = toolbox.individual()
 
     pop = toolbox.population(n=popSize)
+    hof = tools.HallOfFame(1)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean)
+    stats.register("std", np.std)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
+
+    logbook = tools.Logbook()
+    logbook.header = "gen", "evals", "std", "min", "avg", "max"
+
+    #CXPB, MUTPB, NGEN = 0.5, 0.2, 40
 
     # Evaluate the entire population
-    fitnesses = list(toolbox.map(toolbox.evaluate, pop))
-    for ind, fit in zip(pop, fitnesses):
-        ind.fitness.values = fit
+    for ind in pop:
+        ind.fitness.values = toolbox.evaluate(ind)
 
-    # Extracting all the fitnesses of
-    fits = [ind.fitness.values[0] for ind in pop]
+    hof.update(pop)
+    record = stats.compile(pop)
+    logbook.record(gen=0, evals=len(pop), **record)
+    print(logbook.stream)
 
-    # Variable keeping track of the number of generations
-    g = 0
-
-    # Variable containing statistics for each generation
-    genFits = [None] * numGens
-
-    # Begin the evolution
-    while g < numGens:
-        # Select the next generation individuals
+    for g in range(1, numGens):
+        # Select the offspring
         offspring = toolbox.select(pop, len(pop))
-        # Clone the selected individuals
-        offspring = list(toolbox.map(toolbox.clone, offspring))
+        # Clone the offspring
+        offspring = [toolbox.clone(ind) for ind in offspring]
 
-        # Apply crossover and mutation on the offspring
-        for child1, child2 in zip(offspring[::2], offspring[1::2]):
-            if random.random() < CXPB:
-                toolbox.mate(child1, child2)
-                del child1.fitness.values
-                del child2.fitness.values
+        # Apply crossover and mutation
+        for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
+            for tree1, tree2 in zip(ind1, ind2):
+                if random.random() < CXPB:
+                    toolbox.mate(tree1, tree2)
+                    del ind1.fitness.values
+                    del ind2.fitness.values
 
-        for mutant in offspring:
-            if random.random() < MUTPB:
-                toolbox.mutate(mutant)
-                del mutant.fitness.values
+        for ind in offspring:
+            for tree, pset in zip(ind, psets):
+                if random.random() < MUTPB:
+                    try:
+                        toolbox.mutate(individual=tree, pset=pset)
+                        del ind.fitness.values
+                    except IndexError:
+                        print("Index error!!")
+                        rp.plot_decision_graph(tree, "errors/ex.pdf")
 
         # Evaluate the individuals with an invalid fitness
-        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
+        invalids = [ind for ind in offspring if not ind.fitness.valid]
+        for ind in invalids:
+            ind.fitness.values = toolbox.evaluate(ind)
 
-        pop[:] = offspring
+        # Replacement of the population by the offspring
+        pop = offspring
+        hof.update(pop)
+        record = stats.compile(pop)
+        logbook.record(gen=g, evals=len(invalids), **record)
+        print(logbook.stream)
 
-        # Gather all the fitnesses in one list
-        fits = [ind.fitness.values[0] for ind in pop]
+    print('Best individual : ', hof[0][0], hof[0].fitness)
 
-        # Save fitnesses at each generation for plotting
-        genFits[g] = fits
-
-        # A new generation
-        g = g + 1
-
-    return pop, genFits
+    return pop, stats, logbook, hof
 
 def run_n_times(numRuns):
-    fitStats = [None] * numRuns  # Contains the fitnesses at each generation for each run of the algorithm
-    finalPops = [None] * numRuns  # Contains the final population for each run of the algorithm
+    pops = [None] * numRuns  # Contains the final population for each run of the algorithm
+    stats = [None] * numRuns
+    logbooks = [None] * numRuns
+    hofs = [None] * numRuns
     for i in range(numRuns):
         results = single_run(i)
-        finalPops[i] = results[0]
-        fitStats[i] = results[1]
-    return finalPops, fitStats
+        pops[i] = results[0]
+        stats[i] = results[1]
+        logbooks[i] = results[2]
+        hofs[i] = results[3]
+    return pops, stats, logbooks, hofs
 
 
 def main():
@@ -549,44 +587,39 @@ def main():
                              'run.')
     parser.add_argument('--display_strategy_runs', type=int, nargs='?', default='0',
                         help='Display the strategy for the top n individuals from the final population of each run.')
-    parser.add_argument('--plot_max_graph', type=bool, default=False,
-                        help='Plot the fitness of the best individual over all runs at each generation.')
-    parser.add_argument('--plot_box_and_whisker', type=bool, default=False,
-                        help='Plot box and whisker for each generation over all runs.')
+    parser.add_argument('--save_logbook', type=str, default=False,
+                        help='Save the logbook to given path.')
     args = parser.parse_args()
 
     # Run the algorithm
     numRuns = args.num_runs
     print "Running ", numRuns, " time(s)..."
-    finalPops, fitStats = run_n_times(numRuns)
+    pops, stats, logbooks, hofs = run_n_times(numRuns)
+
+    # Save logbook
+    if len(args.save_logbook) > 0:
+        pickle.dump(logbooks, open(args.save_logbook, "wb"))
 
     # Print decision graphs
     numDecisionGraphs = args.plot_decision_graphs
     if numDecisionGraphs > 0:
         # For each run, print decision graphs for top 'numDecisionGraphs' individuals in final population
         for i in range(numRuns):
-            top_n = tools.selBest(finalPops[i], numDecisionGraphs)
+            top_n = tools.selBest(pops[i], numDecisionGraphs)
             for j in range(numDecisionGraphs):
-                filename = "decision/run_" + str(i) + "_num_" + str(j) + ".pdf"
-                rp.plot_decision_graph(top_n[j], filename)
+                filepath = "decision/run_" + str(i) + "_num_" + str(j)
+                for k in range(len(top_n[j])):
+                    filename = filepath + "_" + str(k) + "_" + ".pdf"
+                    rp.plot_decision_graph(top_n[j][k], filename)
 
     # Display strategies
     numStrategyRuns = args.display_strategy_runs
     if numStrategyRuns > 0:
         # For each run, display strategy for top 'numStrategyRuns' individuals in final population
         for i in range(numRuns):
-            top_n = tools.selBest(finalPops[i], numStrategyRuns)
+            top_n = tools.selBest(pops[i], numStrategyRuns)
             for j in range(numStrategyRuns):
                 displayStrategyRun(top_n[j])
-
-
-    # Plot the fitness value of the best individual over all runs at each generation
-    if args.plot_max_graph:
-        rp.plot_best(fitStats)
-
-    # Plot box and whisker for best individual from each population at each generation
-    if args.plot_box_and_whisker:
-        rp.plot_best_box_and_whisker(fitStats)
 
 
 main()
