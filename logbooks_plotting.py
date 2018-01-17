@@ -71,5 +71,5 @@ def plot_box_and_whisker_from_logbooks(logbooks_path_list, colours_list):
 
 # Testing
 #plot_max_from_logbooks(["dumps/logbook.p", "dumps/adf_logbook.p"], ["y", "b"], ["Without ADF", "ADF"])
-plot_box_and_whisker_from_logbooks(["dumps/logbook.p", "dumps/adf_logbook.p"], ["y", "b"])
+#plot_box_and_whisker_from_logbooks(["dumps/logbook.p", "dumps/adf_logbook.p", "dumps/test.p"], ["y", "b", "m"])
 #plot_box_and_whisker_from_logbooks(["dumps/logbook.p"], ["y"])
