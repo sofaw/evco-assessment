@@ -1,11 +1,12 @@
 # This code defines the agent (as in the playable version) in a way that can be called and executed from an evolutionary algorithm. The code is partial and will not execute. You need to add to the code to create an evolutionary algorithm that evolves and executes a snake agent.
 import argparse
 import curses
+import copy
 import numpy as np
 import operator
 import random
 import pickle
-from functools import partial
+from functools import partial, wraps
 
 from deap import base, creator, gp, tools
 
@@ -399,6 +400,23 @@ def evalSnake(individual):
     return (totalScore/numToAvg),
 
 
+# Using gp.staticLimit was giving an index error when using it with ADF so I implemented a custom version
+def customStaticLimit(key, max_value):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            keep_inds = [copy.deepcopy(ind) for ind in args]
+            new_inds = list(func(*args, **kwargs))
+            for i, ind in enumerate(new_inds):
+                if key(ind) > max_value:
+                    if len(keep_inds) > 0:
+                        new_inds[i] = random.choice(keep_inds) # This was being called with an empty list resulting
+                        # in an index error
+            return new_inds
+        return wrapper
+    return decorator
+
+
 # Parameters
 numGens = 45
 popSize = 500
@@ -469,8 +487,8 @@ creator.create("Individual", list, fitness=creator.FitnessMax)
 creator.create("Tree", gp.PrimitiveTree)
 
 toolbox = base.Toolbox()
-toolbox.register("pset_expr", gp.genFull, pset=pset, min_=2, max_=5)
-toolbox.register("adf_expr", gp.genFull, pset=adfset, min_=2, max_=5)
+toolbox.register("pset_expr", gp.genFull, pset=pset, min_=1, max_=5)
+toolbox.register("adf_expr", gp.genFull, pset=adfset, min_=1, max_=5)
 
 toolbox.register('adf', tools.initIterate, creator.Tree, toolbox.adf_expr)
 toolbox.register('main', tools.initIterate, creator.Tree, toolbox.pset_expr)
@@ -485,12 +503,14 @@ toolbox.register("evaluate", evalSnake)
 toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.8, fitness_first=True)
 #toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
 toolbox.register("mate", gp.cxOnePoint)
-toolbox.register("expr_mut", gp.genFull, min_=0, max_=3)
+toolbox.register("expr_mut", gp.genFull, min_=1, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 MAX_HEIGHT = 10
-toolbox.decorate("mate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
-toolbox.decorate("mutate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+toolbox.decorate("mate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+toolbox.decorate("mutate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+#toolbox.decorate("mate", gp.staticLimit(len, 150))
+#toolbox.decorate("mutate", gp.staticLimit(len, 150))
 
 
 # Performs a single run of the evolutionary algorithm given a randomSeed value
@@ -538,12 +558,14 @@ def single_run(randomSeed):
         for ind in offspring:
             for tree, pset in zip(ind, psets):
                 if random.random() < MUTPB:
-                    try:
-                        toolbox.mutate(individual=tree, pset=pset)
-                        del ind.fitness.values
-                    except IndexError:
-                        print("Index error!!")
-                        rp.plot_decision_graph(tree, "errors/ex.pdf")
+                    #try:
+                    #    toolbox.mutate(individual=tree, pset=pset)
+                    #    del ind.fitness.values
+                    #except IndexError:
+                    #    print("Index error!!")
+                    #    rp.plot_decision_graph(tree, "errors/ex.pdf")
+                    toolbox.mutate(individual=tree, pset=pset)
+                    del ind.fitness.values
 
         # Evaluate the individuals with an invalid fitness
         invalids = [ind for ind in offspring if not ind.fitness.valid]
@@ -593,7 +615,7 @@ def main():
 
     # Run the algorithm
     numRuns = args.num_runs
-    print "Running ", numRuns, " time(s)..."
+    print ("Running " + str(numRuns) + " time(s)...")
     pops, stats, logbooks, hofs = run_n_times(numRuns)
 
     # Save logbook
