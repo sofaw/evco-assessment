@@ -452,9 +452,9 @@ toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
 toolbox.register("expr_mut", gp.genFull, min_=0, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
-MAX_HEIGHT = 10
-toolbox.decorate("mate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
-toolbox.decorate("mutate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+#MAX_HEIGHT = 10
+#toolbox.decorate("mate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+#toolbox.decorate("mutate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
 
 # Performs a single run of the evolutionary algorithm given a randomSeed value
 # Returns the population at the final generation and a list of fitnesses at each generation
@@ -524,6 +524,7 @@ def run_n_times(numRuns):
     logbooks = [None] * numRuns
     hofs = [None] * numRuns
     for i in range(numRuns):
+        print "run " + str(i)
         results = single_run(i)
         pops[i] = results[0]
         stats[i] = results[1]
