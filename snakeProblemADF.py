@@ -418,7 +418,7 @@ def customStaticLimit(key, max_value):
 
 
 # Parameters
-numGens = 45
+numGens = 40
 popSize = 500
 CXPB = 0.9
 MUTPB = 0.02
@@ -428,18 +428,36 @@ adfset.addPrimitive(snake.if_danger_up, 2)
 adfset.addPrimitive(snake.if_danger_right, 2)
 adfset.addPrimitive(snake.if_danger_down, 2)
 adfset.addPrimitive(snake.if_danger_left, 2)
-adfset.addPrimitive(snake.if_danger_two_up, 2)
-adfset.addPrimitive(snake.if_danger_two_right, 2)
-adfset.addPrimitive(snake.if_danger_two_down, 2)
-adfset.addPrimitive(snake.if_danger_two_left, 2)
+#adfset.addPrimitive(snake.if_danger_two_up, 2)
+#adfset.addPrimitive(snake.if_danger_two_right, 2)
+#adfset.addPrimitive(snake.if_danger_two_down, 2)
+#adfset.addPrimitive(snake.if_danger_two_left, 2)
 adfset.addPrimitive(snake.if_food_up, 2)
 adfset.addPrimitive(snake.if_food_right, 2)
-adfset.addPrimitive(snake.if_food_down, 2)
-adfset.addPrimitive(snake.if_food_left, 2)
+#adfset.addPrimitive(snake.if_food_down, 2)
+#adfset.addPrimitive(snake.if_food_left, 2)
 #adfset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 #adfset.addTerminal(snake.changeDirectionRight)
 #adfset.addTerminal(snake.changeDirectionDown)
 #adfset.addTerminal(snake.changeDirectionLeft)
+
+adfset1 = gp.PrimitiveSet("adf1", 2)
+adfset1.addPrimitive(snake.if_danger_up, 2)
+adfset1.addPrimitive(snake.if_danger_right, 2)
+adfset1.addPrimitive(snake.if_danger_down, 2)
+adfset1.addPrimitive(snake.if_danger_left, 2)
+#adfset1.addPrimitive(snake.if_danger_two_up, 2)
+#adfset1.addPrimitive(snake.if_danger_two_right, 2)
+#adfset1.addPrimitive(snake.if_danger_two_down, 2)
+#adfset1.addPrimitive(snake.if_danger_two_left, 2)
+adfset1.addPrimitive(snake.if_food_up, 2)
+adfset1.addPrimitive(snake.if_food_right, 2)
+#adfset1.addPrimitive(snake.if_food_down, 2)
+#adfset1.addPrimitive(snake.if_food_left, 2)
+#adfset1.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
+#adfset1.addTerminal(snake.changeDirectionRight)
+#adfset1.addTerminal(snake.changeDirectionDown)
+#adfset1.addTerminal(snake.changeDirectionLeft)
 
 
 # GP primitives and terminals
@@ -447,14 +465,14 @@ pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since de
 #pset.addPrimitive(snake.if_wall_ahead, 2)
 #pset.addPrimitive(snake.if_tail_ahead, 2)
 #pset.addPrimitive(snake.if_danger_ahead, 2)
-pset.addPrimitive(snake.if_direction_up, 2)
-pset.addPrimitive(snake.if_direction_right, 2)
-pset.addPrimitive(snake.if_direction_down, 2)
-pset.addPrimitive(snake.if_direction_left, 2)
+#pset.addPrimitive(snake.if_direction_up, 2)
+#pset.addPrimitive(snake.if_direction_right, 2)
+#pset.addPrimitive(snake.if_direction_down, 2)
+#pset.addPrimitive(snake.if_direction_left, 2)
 pset.addPrimitive(snake.if_food_up, 2)
 pset.addPrimitive(snake.if_food_right, 2)
-pset.addPrimitive(snake.if_food_down, 2)
-pset.addPrimitive(snake.if_food_left, 2)
+#pset.addPrimitive(snake.if_food_down, 2)
+#pset.addPrimitive(snake.if_food_left, 2)
 #pset.addPrimitive(snake.if_tail_up, 2)
 #pset.addPrimitive(snake.if_tail_right, 2)
 #pset.addPrimitive(snake.if_tail_down, 2)
@@ -463,22 +481,23 @@ pset.addPrimitive(snake.if_food_left, 2)
 #pset.addPrimitive(snake.if_wall_right, 2)
 #pset.addPrimitive(snake.if_wall_down, 2)
 #pset.addPrimitive(snake.if_wall_left, 2)
-#pset.addPrimitive(snake.if_danger_up, 2)
+pset.addPrimitive(snake.if_danger_up, 2)
 pset.addPrimitive(snake.if_danger_right, 2)
 pset.addPrimitive(snake.if_danger_down, 2)
 pset.addPrimitive(snake.if_danger_left, 2)
-pset.addPrimitive(snake.if_danger_two_up, 2)
-pset.addPrimitive(snake.if_danger_two_right, 2)
-pset.addPrimitive(snake.if_danger_two_down, 2)
-pset.addPrimitive(snake.if_danger_two_left, 2)
+#pset.addPrimitive(snake.if_danger_two_up, 2)
+#pset.addPrimitive(snake.if_danger_two_right, 2)
+#pset.addPrimitive(snake.if_danger_two_down, 2)
+#pset.addPrimitive(snake.if_danger_two_left, 2)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
 pset.addTerminal(snake.changeDirectionLeft)
 
 pset.addADF(adfset=adfset)
+pset.addADF(adfset=adfset1)
 
-psets = (pset, adfset)
+psets = (pset, adfset, adfset1)
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
@@ -493,7 +512,7 @@ toolbox.register("adf_expr", gp.genFull, pset=adfset, min_=1, max_=5)
 toolbox.register('adf', tools.initIterate, creator.Tree, toolbox.adf_expr)
 toolbox.register('main', tools.initIterate, creator.Tree, toolbox.pset_expr)
 
-func_cycle = [toolbox.main, toolbox.adf]
+func_cycle = [toolbox.main, toolbox.adf, toolbox.adf]
 
 toolbox.register('individual', tools.initCycle, creator.Individual, func_cycle)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -501,14 +520,14 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register('compile', gp.compileADF, psets=psets)
 toolbox.register("evaluate", evalSnake)
 toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.8, fitness_first=True)
-#toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
-toolbox.register("mate", gp.cxOnePoint)
+toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
+#toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genFull, min_=1, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
-MAX_HEIGHT = 10
-toolbox.decorate("mate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
-toolbox.decorate("mutate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+#MAX_HEIGHT = 10
+#toolbox.decorate("mate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+#toolbox.decorate("mutate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
 #toolbox.decorate("mate", gp.staticLimit(len, 150))
 #toolbox.decorate("mutate", gp.staticLimit(len, 150))
 
@@ -589,6 +608,7 @@ def run_n_times(numRuns):
     logbooks = [None] * numRuns
     hofs = [None] * numRuns
     for i in range(numRuns):
+        print "run " + str(i)
         results = single_run(i)
         pops[i] = results[0]
         stats[i] = results[1]
