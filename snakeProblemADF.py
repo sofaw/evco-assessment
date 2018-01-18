@@ -506,9 +506,9 @@ creator.create("Individual", list, fitness=creator.FitnessMax)
 creator.create("Tree", gp.PrimitiveTree)
 
 toolbox = base.Toolbox()
-toolbox.register("pset_expr", gp.genFull, pset=pset, min_=1, max_=5)
-toolbox.register("adf_expr", gp.genFull, pset=adfset, min_=1, max_=5)
-toolbox.register("adf1_expr", gp.genFull, pset=adfset1, min_=1, max_=5)
+toolbox.register("pset_expr", gp.genFull, pset=pset, min_=1, max_=3)
+toolbox.register("adf_expr", gp.genFull, pset=adfset, min_=1, max_=3)
+toolbox.register("adf1_expr", gp.genFull, pset=adfset1, min_=1, max_=3)
 
 toolbox.register('adf', tools.initIterate, creator.Tree, toolbox.adf_expr)
 toolbox.register('adf1', tools.initIterate, creator.Tree, toolbox.adf1_expr)
