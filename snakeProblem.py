@@ -401,8 +401,8 @@ def evalSnake(individual):
 # Parameters
 numGens = 40
 popSize = 500
-CXPB = 0.6
-MUTPB = 0.3
+CXPB = 0.9
+MUTPB = 0.02
 
 # GP primitives and terminals
 pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
@@ -429,10 +429,10 @@ pset.addPrimitive(snake.if_danger_up, 2)
 pset.addPrimitive(snake.if_danger_right, 2)
 pset.addPrimitive(snake.if_danger_down, 2)
 pset.addPrimitive(snake.if_danger_left, 2)
-#pset.addPrimitive(snake.if_danger_two_up, 2)
-#pset.addPrimitive(snake.if_danger_two_right, 2)
-#pset.addPrimitive(snake.if_danger_two_down, 2)
-#pset.addPrimitive(snake.if_danger_two_left, 2)
+pset.addPrimitive(snake.if_danger_two_up, 2)
+pset.addPrimitive(snake.if_danger_two_right, 2)
+pset.addPrimitive(snake.if_danger_two_down, 2)
+pset.addPrimitive(snake.if_danger_two_left, 2)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
