@@ -399,8 +399,8 @@ def evalSnake(individual):
 
 
 # Parameters
-numGens = 50
-popSize = 1000
+numGens = 40
+popSize = 500
 CXPB = 0.9
 MUTPB = 0.02
 
@@ -417,22 +417,14 @@ pset.addPrimitive(snake.if_food_up, 2)
 pset.addPrimitive(snake.if_food_right, 2)
 pset.addPrimitive(snake.if_food_down, 2)
 pset.addPrimitive(snake.if_food_left, 2)
-#pset.addPrimitive(snake.if_tail_up, 2)
-#pset.addPrimitive(snake.if_tail_right, 2)
-#pset.addPrimitive(snake.if_tail_down, 2)
-#pset.addPrimitive(snake.if_tail_left, 2)
-#pset.addPrimitive(snake.if_wall_up, 2)
-#pset.addPrimitive(snake.if_wall_right, 2)
-#pset.addPrimitive(snake.if_wall_down, 2)
-#pset.addPrimitive(snake.if_wall_left, 2)
 pset.addPrimitive(snake.if_danger_up, 2)
 pset.addPrimitive(snake.if_danger_right, 2)
 pset.addPrimitive(snake.if_danger_down, 2)
 pset.addPrimitive(snake.if_danger_left, 2)
-#pset.addPrimitive(snake.if_danger_two_up, 2)
-#pset.addPrimitive(snake.if_danger_two_right, 2)
-#pset.addPrimitive(snake.if_danger_two_down, 2)
-#pset.addPrimitive(snake.if_danger_two_left, 2)
+pset.addPrimitive(snake.if_danger_two_up, 2)
+pset.addPrimitive(snake.if_danger_two_right, 2)
+pset.addPrimitive(snake.if_danger_two_down, 2)
+pset.addPrimitive(snake.if_danger_two_left, 2)
 pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
@@ -455,6 +447,8 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 #MAX_HEIGHT = 10
 #toolbox.decorate("mate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
 #toolbox.decorate("mutate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+#toolbox.decorate("mate", gp.staticLimit(len, 150))
+#toolbox.decorate("mutate", gp.staticLimit(len, 150))
 
 # Performs a single run of the evolutionary algorithm given a randomSeed value
 # Returns the population at the final generation and a list of fitnesses at each generation
