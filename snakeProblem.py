@@ -430,8 +430,8 @@ def evalSnake(individual):
 # Parameters
 numGens = 40
 popSize = 500
-CXPB = 0.9
-MUTPB = 0.02
+CXPB = 0.5
+MUTPB = 0.4
 
 # GP primitives and terminals
 pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
