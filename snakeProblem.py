@@ -277,6 +277,33 @@ class SnakePlayer(list):
     def if_danger_two_left(self, out1, out2):
         return partial(ap.if_then_else, self.sense_danger_left, out1, out2)
 
+
+    def sense_food_one_up(self):
+        food = self.food[0]
+        head = self.body[0]
+        return (food[0] == head[0] - 1) and food[1] == head[1]
+    def sense_food_one_right(self):
+        food = self.food[0]
+        head = self.body[0]
+        return food[0] == head[0] and food[1] == (head[1] + 1)
+    def sense_food_one_down(self):
+        food = self.food[0]
+        head = self.body[0]
+        return (food[0] == head[0] + 1) and food[1] == head[1]
+    def sense_food_one_left(self):
+        food = self.food[0]
+        head = self.body[0]
+        return food[0] == head[0] and food[1] == (head[1] - 1)
+
+    def if_food_one_up(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_food_one_up, out1, out2)
+    def if_food_one_right(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_food_one_right, out1, out2)
+    def if_food_one_down(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_food_one_down, out1, out2)
+    def if_food_one_left(self, out1, out2):
+        return partial(ap.if_then_else, self.sense_food_one_left, out1, out2)
+
 # This function places a food item in the environment
 def placeFood(snake):
     food = []
@@ -390,18 +417,14 @@ def runGame(individual):
 
     #return totalScore,
 
-    return snake.score, timeout
+    return snake.score
 
 def evalSnake(individual):
     totalScore = 0
     numToAvg = 2
-    timeouts = 0
     for i in range(numToAvg):
-        score, timeout = runGame(individual)
-        totalScore += score
-        if timeout:
-            timeouts += 1
-    return (totalScore/numToAvg), timeouts
+        totalScore += runGame(individual)
+    return (totalScore/numToAvg),
 
 
 # Parameters
@@ -423,6 +446,10 @@ pset.addPrimitive(snake.if_food_up, 2)
 pset.addPrimitive(snake.if_food_right, 2)
 pset.addPrimitive(snake.if_food_down, 2)
 pset.addPrimitive(snake.if_food_left, 2)
+pset.addPrimitive(snake.if_food_one_up, 2)
+pset.addPrimitive(snake.if_food_one_right, 2)
+pset.addPrimitive(snake.if_food_one_down, 2)
+pset.addPrimitive(snake.if_food_one_left, 2)
 pset.addPrimitive(snake.if_danger_up, 2)
 pset.addPrimitive(snake.if_danger_right, 2)
 pset.addPrimitive(snake.if_danger_down, 2)
@@ -436,7 +463,7 @@ pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
 pset.addTerminal(snake.changeDirectionLeft)
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0, -0.5))
+creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
