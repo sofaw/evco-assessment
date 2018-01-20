@@ -386,16 +386,22 @@ def runGame(individual):
 
         totalScore += snake.score
 
+    timeout = (timer == XSIZE * YSIZE)
+
     #return totalScore,
 
-    return snake.score
+    return snake.score, timeout
 
 def evalSnake(individual):
     totalScore = 0
     numToAvg = 2
+    timeouts = 0
     for i in range(numToAvg):
-        totalScore += runGame(individual)
-    return (totalScore/numToAvg),
+        score, timeout = runGame(individual)
+        totalScore += score
+        if timeout:
+            timeouts += 1
+    return (totalScore/numToAvg), timeouts
 
 
 # Parameters
@@ -430,7 +436,7 @@ pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
 pset.addTerminal(snake.changeDirectionLeft)
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("FitnessMax", base.Fitness, weights=(1.0, -0.5))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
@@ -457,7 +463,7 @@ def single_run(randomSeed):
 
     pop = toolbox.population(n=popSize)
     hof = tools.HallOfFame(1)
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats = tools.Statistics(lambda ind: ind.fitness.values[0])
     stats.register("avg", np.mean)
     stats.register("std", np.std)
     stats.register("min", np.min)
