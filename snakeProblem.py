@@ -399,8 +399,8 @@ def evalSnake(individual):
 
 
 # Parameters
-numGens = 40
-popSize = 500
+numGens = 50
+popSize = 1000
 CXPB = 0.9
 MUTPB = 0.02
 
@@ -588,7 +588,7 @@ def main():
         if numDecisionGraphs > 0:
             top_n = tools.selBest(pop, numDecisionGraphs)
             for j in range(numDecisionGraphs):
-                filename = "single_decision/seed_" + str(args.plot_decision_graphs) + "_" + str(j) + ".pdf"
+                filename = "single_decision/seed_" + str(args.single_run_seed) + "_" + str(j) + ".pdf"
                 rp.plot_decision_graph(top_n[j], filename)
 
 
