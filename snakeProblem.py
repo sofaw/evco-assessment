@@ -392,14 +392,14 @@ def runGame(individual):
 
 def evalSnake(individual):
     totalScore = 0
-    numToAvg = 4
+    numToAvg = 2
     for i in range(numToAvg):
         totalScore += runGame(individual)
     return (totalScore/numToAvg),
 
 
 # Parameters
-numGens = 100
+numGens = 40
 popSize = 500
 CXPB = 0.9
 MUTPB = 0.02
@@ -442,14 +442,14 @@ creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=2, max_=8)
+toolbox.register("expr_init", gp.genGrow, pset=pset, min_=2, max_=8)
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", evalSnake)
 toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.3, fitness_first=True)
 toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
 #toolbox.register("mate", gp.cxOnePoint)
-toolbox.register("expr_mut", gp.genFull, min_=0, max_=3)
+toolbox.register("expr_mut", gp.genGrow, min_=0, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 #MAX_HEIGHT = 10
@@ -545,35 +545,56 @@ def main():
                              'run.')
     parser.add_argument('--display_strategy_runs', type=int, nargs='?', default='0',
                         help='Display the strategy for the top n individuals from the final population of each run.')
+    parser.add_argument('--single_run_seed', type=int, nargs='?', default='-1',
+                        help='Perform a single run with the given seed')
     parser.add_argument('--save_logbook', type=str, default=False,
                         help='Save the logbook to given path.')
     args = parser.parse_args()
 
     # Run the algorithm
-    numRuns = args.num_runs
-    print "Running ", numRuns, " time(s)..."
-    pops, stats, logbooks, hofs = run_n_times(numRuns)
+    if(args.single_run_seed < 0):
+        numRuns = args.num_runs
+        print "Running ", numRuns, " time(s)..."
+        pops, stats, logbooks, hofs = run_n_times(numRuns)
 
-    # Save logbook
-    if len(args.save_logbook) > 0:
-        pickle.dump(logbooks, open(args.save_logbook, "wb"))
+        # Save logbook
+        if len(args.save_logbook) > 0:
+            pickle.dump(logbooks, open(args.save_logbook, "wb"))
 
-    # Print decision graphs
-    numDecisionGraphs = args.plot_decision_graphs
-    if numDecisionGraphs > 0:
-        # For each run, print decision graphs for top 'numDecisionGraphs' individuals in final population
-        for i in range(numRuns):
-            top_n = tools.selBest(pops[i], numDecisionGraphs)
+        # Print decision graphs
+        numDecisionGraphs = args.plot_decision_graphs
+        if numDecisionGraphs > 0:
+            # For each run, print decision graphs for top 'numDecisionGraphs' individuals in final population
+            for i in range(numRuns):
+                top_n = tools.selBest(pops[i], numDecisionGraphs)
+                for j in range(numDecisionGraphs):
+                    filename = "decision/run_" + str(i) + "_num_" + str(j) + ".pdf"
+                    rp.plot_decision_graph(top_n[j], filename)
+
+        # Display strategies
+        numStrategyRuns = args.display_strategy_runs
+        if numStrategyRuns > 0:
+            # For each run, display strategy for top 'numStrategyRuns' individuals in final population
+            for i in range(numRuns):
+                top_n = tools.selBest(pops[i], numStrategyRuns)
+                for j in range(numStrategyRuns):
+                    displayStrategyRun(top_n[j])
+
+    else:
+        pop, stats, logbook, hof = single_run(args.single_run_seed)
+
+        # Print decision graphs
+        numDecisionGraphs = args.plot_decision_graphs
+        if numDecisionGraphs > 0:
+            top_n = tools.selBest(pop, numDecisionGraphs)
             for j in range(numDecisionGraphs):
-                filename = "decision/run_" + str(i) + "_num_" + str(j) + ".pdf"
+                filename = "single_decision/seed_" + str(args.plot_decision_graphs) + "_" + str(j) + ".pdf"
                 rp.plot_decision_graph(top_n[j], filename)
 
-    # Display strategies
-    numStrategyRuns = args.display_strategy_runs
-    if numStrategyRuns > 0:
-        # For each run, display strategy for top 'numStrategyRuns' individuals in final population
-        for i in range(numRuns):
-            top_n = tools.selBest(pops[i], numStrategyRuns)
+
+        numStrategyRuns = args.display_strategy_runs
+        if numStrategyRuns > 0:
+            top_n = tools.selBest(pop, numStrategyRuns)
             for j in range(numStrategyRuns):
                 displayStrategyRun(top_n[j])
 
