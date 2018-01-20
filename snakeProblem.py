@@ -396,6 +396,7 @@ def runGame(individual):
     snake._reset()
     food = placeFood(snake)
     timer = 0
+    timeAlive = 0
     while not snake.snakeHasCollided() and not timer == XSIZE * YSIZE:
 
         ## EXECUTE THE SNAKE'S BEHAVIOUR HERE ##
@@ -407,29 +408,32 @@ def runGame(individual):
             snake.score += 1
             food = placeFood(snake)
             timer = 0
+            timeAlive += 1
         else:
             snake.body.pop()
             timer += 1  # timesteps since last eaten
+            timeAlive += 1
 
-        totalScore += snake.score
-
-    timeout = (timer == XSIZE * YSIZE)
+        #totalScore += snake.score
 
     #return totalScore,
 
-    return snake.score
+    return snake.score, timeAlive
 
 def evalSnake(individual):
     totalScore = 0
+    totalTimeAlive = 0
     numToAvg = 2
     for i in range(numToAvg):
-        totalScore += runGame(individual)
-    return (totalScore/numToAvg),
+        score, timeAlive = runGame(individual)
+        totalScore += score
+        totalTimeAlive += timeAlive
+    return (totalScore/numToAvg), totalTimeAlive
 
 
 # Parameters
-numGens = 80
-popSize = 1000
+numGens = 40
+popSize = 500
 CXPB = 0.9
 MUTPB = 0.02
 
@@ -463,7 +467,7 @@ pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
 pset.addTerminal(snake.changeDirectionLeft)
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
+creator.create("FitnessMax", base.Fitness, weights=(1.0, 1.0))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
