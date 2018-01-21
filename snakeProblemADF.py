@@ -371,6 +371,7 @@ def runGame(individual):
     snake._reset()
     food = placeFood(snake)
     timer = 0
+    timeAlive = 0
     while not snake.snakeHasCollided() and not timer == XSIZE * YSIZE:
 
         ## EXECUTE THE SNAKE'S BEHAVIOUR HERE ##
@@ -382,22 +383,27 @@ def runGame(individual):
             snake.score += 1
             food = placeFood(snake)
             timer = 0
+            timeAlive += 1
         else:
             snake.body.pop()
             timer += 1  # timesteps since last eaten
+            timeAlive += 1
 
         totalScore += snake.score
 
     #return totalScore,
 
-    return snake.score
+    return snake.score, timeAlive
 
 def evalSnake(individual):
     totalScore = 0
     numToAvg = 4
+    totalTimeAlive = 0
     for i in range(numToAvg):
-        totalScore += runGame(individual)
-    return (totalScore/numToAvg),
+        score, timeAlive = runGame(individual)
+        totalScore += score
+        totalTimeAlive += timeAlive
+    return (totalScore/numToAvg), (totalTimeAlive/numToAvg)
 
 
 # Parameters
@@ -482,7 +488,7 @@ pset.addADF(adfset=adfset1)
 
 psets = (pset, adfset, adfset1)
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("FitnessMax", base.Fitness, weights=(1.0, 1.0))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 #creator.create("adf", gp.PrimitiveTree, pset=adfset)
 #creator.create("main", gp.PrimitiveTree, pset=pset)
@@ -519,7 +525,7 @@ def single_run(randomSeed):
 
     pop = toolbox.population(n=popSize)
     hof = tools.HallOfFame(1)
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats = tools.Statistics(lambda ind: ind.fitness.values[0])
     stats.register("avg", np.mean)
     stats.register("std", np.std)
     stats.register("min", np.min)
