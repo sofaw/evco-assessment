@@ -419,10 +419,10 @@ adfset.addPrimitive(snake.if_danger_left, 2)
 #adfset.addPrimitive(snake.if_food_right, 2)
 #adfset.addPrimitive(snake.if_food_down, 2)
 #adfset.addPrimitive(snake.if_food_left, 2)
-adfset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
-adfset.addTerminal(snake.changeDirectionRight)
-adfset.addTerminal(snake.changeDirectionDown)
-adfset.addTerminal(snake.changeDirectionLeft)
+#adfset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
+#adfset.addTerminal(snake.changeDirectionRight)
+#adfset.addTerminal(snake.changeDirectionDown)
+#adfset.addTerminal(snake.changeDirectionLeft)
 
 adfset1 = gp.PrimitiveSet("adf1", 2)
 #adfset1.addPrimitive(snake.if_danger_up, 2)
@@ -437,10 +437,10 @@ adfset1.addPrimitive(snake.if_danger_two_left, 2)
 #adfset1.addPrimitive(snake.if_food_right, 2)
 #adfset1.addPrimitive(snake.if_food_down, 2)
 #adfset1.addPrimitive(snake.if_food_left, 2)
-adfset1.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
-adfset1.addTerminal(snake.changeDirectionRight)
-adfset1.addTerminal(snake.changeDirectionDown)
-adfset1.addTerminal(snake.changeDirectionLeft)
+#adfset1.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
+#adfset1.addTerminal(snake.changeDirectionRight)
+#adfset1.addTerminal(snake.changeDirectionDown)
+#adfset1.addTerminal(snake.changeDirectionLeft)
 
 
 # GP primitives and terminals
