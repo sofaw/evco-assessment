@@ -432,28 +432,28 @@ adfset.addPrimitive(snake.if_danger_left, 2)
 #adfset.addPrimitive(snake.if_danger_two_right, 2)
 #adfset.addPrimitive(snake.if_danger_two_down, 2)
 #adfset.addPrimitive(snake.if_danger_two_left, 2)
-#adfset.addPrimitive(snake.if_food_up, 2)
-#adfset.addPrimitive(snake.if_food_right, 2)
-#adfset.addPrimitive(snake.if_food_down, 2)
-#adfset.addPrimitive(snake.if_food_left, 2)
+adfset.addPrimitive(snake.if_food_up, 2)
+adfset.addPrimitive(snake.if_food_right, 2)
+adfset.addPrimitive(snake.if_food_down, 2)
+adfset.addPrimitive(snake.if_food_left, 2)
 adfset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 adfset.addTerminal(snake.changeDirectionRight)
 adfset.addTerminal(snake.changeDirectionDown)
 adfset.addTerminal(snake.changeDirectionLeft)
 
 adfset1 = gp.PrimitiveSet("adf1", 2)
-#adfset1.addPrimitive(snake.if_danger_up, 2)
-#adfset1.addPrimitive(snake.if_danger_right, 2)
-#adfset1.addPrimitive(snake.if_danger_down, 2)
-#adfset1.addPrimitive(snake.if_danger_left, 2)
-adfset1.addPrimitive(snake.if_danger_two_up, 2)
-adfset1.addPrimitive(snake.if_danger_two_right, 2)
-adfset1.addPrimitive(snake.if_danger_two_down, 2)
-adfset1.addPrimitive(snake.if_danger_two_left, 2)
-#adfset1.addPrimitive(snake.if_food_up, 2)
-#adfset1.addPrimitive(snake.if_food_right, 2)
-#adfset1.addPrimitive(snake.if_food_down, 2)
-#adfset1.addPrimitive(snake.if_food_left, 2)
+adfset1.addPrimitive(snake.if_danger_up, 2)
+adfset1.addPrimitive(snake.if_danger_right, 2)
+adfset1.addPrimitive(snake.if_danger_down, 2)
+adfset1.addPrimitive(snake.if_danger_left, 2)
+#adfset1.addPrimitive(snake.if_danger_two_up, 2)
+#adfset1.addPrimitive(snake.if_danger_two_right, 2)
+#adfset1.addPrimitive(snake.if_danger_two_down, 2)
+#adfset1.addPrimitive(snake.if_danger_two_left, 2)
+adfset1.addPrimitive(snake.if_food_up, 2)
+adfset1.addPrimitive(snake.if_food_right, 2)
+adfset1.addPrimitive(snake.if_food_down, 2)
+adfset1.addPrimitive(snake.if_food_left, 2)
 adfset1.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 adfset1.addTerminal(snake.changeDirectionRight)
 adfset1.addTerminal(snake.changeDirectionDown)
@@ -481,10 +481,10 @@ pset.addPrimitive(snake.if_food_left, 2)
 #pset.addPrimitive(snake.if_wall_right, 2)
 #pset.addPrimitive(snake.if_wall_down, 2)
 #pset.addPrimitive(snake.if_wall_left, 2)
-#pset.addPrimitive(snake.if_danger_up, 2)
-#pset.addPrimitive(snake.if_danger_right, 2)
-#pset.addPrimitive(snake.if_danger_down, 2)
-#pset.addPrimitive(snake.if_danger_left, 2)
+pset.addPrimitive(snake.if_danger_up, 2)
+pset.addPrimitive(snake.if_danger_right, 2)
+pset.addPrimitive(snake.if_danger_down, 2)
+pset.addPrimitive(snake.if_danger_left, 2)
 #pset.addPrimitive(snake.if_danger_two_up, 2)
 #pset.addPrimitive(snake.if_danger_two_right, 2)
 #pset.addPrimitive(snake.if_danger_two_down, 2)
@@ -506,9 +506,9 @@ creator.create("Individual", list, fitness=creator.FitnessMax)
 creator.create("Tree", gp.PrimitiveTree)
 
 toolbox = base.Toolbox()
-toolbox.register("pset_expr", gp.genFull, pset=pset, min_=1, max_=3)
-toolbox.register("adf_expr", gp.genFull, pset=adfset, min_=1, max_=3)
-toolbox.register("adf1_expr", gp.genFull, pset=adfset1, min_=1, max_=3)
+toolbox.register("pset_expr", gp.genGrow, pset=pset, min_=1, max_=3)
+toolbox.register("adf_expr", gp.genGrow, pset=adfset, min_=1, max_=3)
+toolbox.register("adf1_expr", gp.genGrow, pset=adfset1, min_=1, max_=3)
 
 toolbox.register('adf', tools.initIterate, creator.Tree, toolbox.adf_expr)
 toolbox.register('adf1', tools.initIterate, creator.Tree, toolbox.adf1_expr)
@@ -524,7 +524,7 @@ toolbox.register("evaluate", evalSnake)
 toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.8, fitness_first=True)
 toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
 #toolbox.register("mate", gp.cxOnePoint)
-toolbox.register("expr_mut", gp.genFull, min_=1, max_=3)
+toolbox.register("expr_mut", gp.genGrow, min_=1, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 #MAX_HEIGHT = 10
@@ -623,7 +623,8 @@ def main():
     global snake
     global pset
 
-    parser = argparse.ArgumentParser(description='Run evolutionary algorithm to play snake for specified number of runs.')
+    parser = argparse.ArgumentParser(
+        description='Run evolutionary algorithm to play snake for specified number of runs.')
     parser.add_argument('--num_runs', type=int, nargs='?', default='1',
                         help='The number of runs of the evolutionary algorithm to perform')
     parser.add_argument('--plot_decision_graphs', type=int, nargs='?', default='0',
@@ -631,37 +632,59 @@ def main():
                              'run.')
     parser.add_argument('--display_strategy_runs', type=int, nargs='?', default='0',
                         help='Display the strategy for the top n individuals from the final population of each run.')
+    parser.add_argument('--single_run_seed', type=int, nargs='?', default='-1',
+                        help='Perform a single run with the given seed')
     parser.add_argument('--save_logbook', type=str, default=False,
                         help='Save the logbook to given path.')
     args = parser.parse_args()
 
     # Run the algorithm
-    numRuns = args.num_runs
-    print ("Running " + str(numRuns) + " time(s)...")
-    pops, stats, logbooks, hofs = run_n_times(numRuns)
+    if (args.single_run_seed < 0):
+        numRuns = args.num_runs
+        print "Running ", numRuns, " time(s)..."
+        pops, stats, logbooks, hofs = run_n_times(numRuns)
 
-    # Save logbook
-    if len(args.save_logbook) > 0:
-        pickle.dump(logbooks, open(args.save_logbook, "wb"))
+        # Save logbook
+        if len(args.save_logbook) > 0:
+            pickle.dump(logbooks, open(args.save_logbook, "wb"))
 
-    # Print decision graphs
-    numDecisionGraphs = args.plot_decision_graphs
-    if numDecisionGraphs > 0:
-        # For each run, print decision graphs for top 'numDecisionGraphs' individuals in final population
-        for i in range(numRuns):
-            top_n = tools.selBest(pops[i], numDecisionGraphs)
+        # Print decision graphs
+        numDecisionGraphs = args.plot_decision_graphs
+        if numDecisionGraphs > 0:
+            # For each run, print decision graphs for top 'numDecisionGraphs' individuals in final population
+            for i in range(numRuns):
+                top_n = tools.selBest(pops[i], numDecisionGraphs)
+                for j in range(numDecisionGraphs):
+                    filepath = "adf_decisions/run_" + str(i) + "_num_" + str(j)
+                    for k in range(len(top_n[j])):
+                        filename = filepath + "_" + str(k) + "_" + ".pdf"
+                        rp.plot_decision_graph(top_n[j][k], filename)
+
+        # Display strategies
+        numStrategyRuns = args.display_strategy_runs
+        if numStrategyRuns > 0:
+            # For each run, display strategy for top 'numStrategyRuns' individuals in final population
+            for i in range(numRuns):
+                top_n = tools.selBest(pops[i], numStrategyRuns)
+                for j in range(numStrategyRuns):
+                    displayStrategyRun(top_n[j])
+
+    else:
+        pop, stats, logbook, hof = single_run(args.single_run_seed)
+
+        # Print decision graphs
+        numDecisionGraphs = args.plot_decision_graphs
+        if numDecisionGraphs > 0:
+            top_n = tools.selBest(pop, numDecisionGraphs)
             for j in range(numDecisionGraphs):
-                filepath = "adf_decisions/run_" + str(i) + "_num_" + str(j)
+                filepath = "single_decision/seed_" + str(args.single_run_seed) + "_num_" + str(j)
                 for k in range(len(top_n[j])):
                     filename = filepath + "_" + str(k) + "_" + ".pdf"
                     rp.plot_decision_graph(top_n[j][k], filename)
 
-    # Display strategies
-    numStrategyRuns = args.display_strategy_runs
-    if numStrategyRuns > 0:
-        # For each run, display strategy for top 'numStrategyRuns' individuals in final population
-        for i in range(numRuns):
-            top_n = tools.selBest(pops[i], numStrategyRuns)
+        numStrategyRuns = args.display_strategy_runs
+        if numStrategyRuns > 0:
+            top_n = tools.selBest(pop, numStrategyRuns)
             for j in range(numStrategyRuns):
                 displayStrategyRun(top_n[j])
 
