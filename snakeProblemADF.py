@@ -8,7 +8,7 @@ import random
 import pickle
 from functools import partial, wraps
 
-from deap import base, creator, gp, tools
+from deap import algorithms, base, creator, gp, tools
 
 import additionalPrimitives as ap
 import resultsPlotting as rp
@@ -506,7 +506,7 @@ creator.create("Individual", list, fitness=creator.FitnessMax)
 creator.create("Tree", gp.PrimitiveTree)
 
 toolbox = base.Toolbox()
-toolbox.register("pset_expr", gp.genGrow, pset=pset, min_=1, max_=3)
+toolbox.register("pset_expr", gp.genGrow, pset=pset, min_=1, max_=8)
 toolbox.register("adf_expr", gp.genGrow, pset=adfset, min_=1, max_=3)
 toolbox.register("adf1_expr", gp.genGrow, pset=adfset1, min_=1, max_=3)
 
@@ -521,17 +521,19 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 toolbox.register('compile', gp.compileADF, psets=psets)
 toolbox.register("evaluate", evalSnake)
-toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.8, fitness_first=True)
+toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.3, fitness_first=True)
 toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
 #toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genGrow, min_=1, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
-#MAX_HEIGHT = 10
+#MAX_HEIGHT = 17
+#toolbox.decorate("mate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
+#toolbox.decorate("mutate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
 #toolbox.decorate("mate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
 #toolbox.decorate("mutate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
-#toolbox.decorate("mate", gp.staticLimit(len, 150))
-#toolbox.decorate("mutate", gp.staticLimit(len, 150))
+#toolbox.decorate("mate", customStaticLimit(len, 100))
+#toolbox.decorate("mutate", customStaticLimit(len, 100))
 
 
 # Performs a single run of the evolutionary algorithm given a randomSeed value
@@ -589,15 +591,26 @@ def single_run(randomSeed):
                     del ind.fitness.values
 
         # Evaluate the individuals with an invalid fitness
-        invalids = [ind for ind in offspring if not ind.fitness.valid]
-        for ind in invalids:
-            ind.fitness.values = toolbox.evaluate(ind)
+        #invalids = [ind for ind in offspring if not ind.fitness.valid]
+        #for ind in invalids:
+        #    ind.fitness.values = toolbox.evaluate(ind)
+        invalids = 0
+        MAX_HEIGHT = 9
+        for i in range(len(offspring)):
+            for j in range(len(offspring[i])):
+                if offspring[i][j].height > MAX_HEIGHT:
+                    offspring[i][j] = toolbox.clone(pop[i][j]) # Replace child that is too big with parent
+            if not offspring[i].fitness.valid:
+                invalids += 1
+                offspring[i].fitness.values = toolbox.evaluate(offspring[i])
+
 
         # Replacement of the population by the offspring
         pop = offspring
         hof.update(pop)
         record = stats.compile(pop)
-        logbook.record(gen=g, evals=len(invalids), **record)
+        #logbook.record(gen=g, evals=len(invalids), **record)
+        logbook.record(gen=g, evals=invalids, **record)
         print(logbook.stream)
 
     print('Best individual : ', hof[0][0], hof[0].fitness)
