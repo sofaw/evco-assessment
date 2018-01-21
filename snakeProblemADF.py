@@ -400,23 +400,6 @@ def evalSnake(individual):
     return (totalScore/numToAvg),
 
 
-# Using gp.staticLimit was giving an index error when using it with ADF so I implemented a custom version
-def customStaticLimit(key, max_value):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            keep_inds = [copy.deepcopy(ind) for ind in args]
-            new_inds = list(func(*args, **kwargs))
-            for i, ind in enumerate(new_inds):
-                if key(ind) > max_value:
-                    if len(keep_inds) > 0:
-                        new_inds[i] = random.choice(keep_inds) # This was being called with an empty list resulting
-                        # in an index error
-            return new_inds
-        return wrapper
-    return decorator
-
-
 # Parameters
 numGens = 40
 popSize = 500
@@ -432,28 +415,28 @@ adfset.addPrimitive(snake.if_danger_left, 2)
 #adfset.addPrimitive(snake.if_danger_two_right, 2)
 #adfset.addPrimitive(snake.if_danger_two_down, 2)
 #adfset.addPrimitive(snake.if_danger_two_left, 2)
-adfset.addPrimitive(snake.if_food_up, 2)
-adfset.addPrimitive(snake.if_food_right, 2)
-adfset.addPrimitive(snake.if_food_down, 2)
-adfset.addPrimitive(snake.if_food_left, 2)
+#adfset.addPrimitive(snake.if_food_up, 2)
+#adfset.addPrimitive(snake.if_food_right, 2)
+#adfset.addPrimitive(snake.if_food_down, 2)
+#adfset.addPrimitive(snake.if_food_left, 2)
 adfset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 adfset.addTerminal(snake.changeDirectionRight)
 adfset.addTerminal(snake.changeDirectionDown)
 adfset.addTerminal(snake.changeDirectionLeft)
 
 adfset1 = gp.PrimitiveSet("adf1", 2)
-adfset1.addPrimitive(snake.if_danger_up, 2)
-adfset1.addPrimitive(snake.if_danger_right, 2)
-adfset1.addPrimitive(snake.if_danger_down, 2)
-adfset1.addPrimitive(snake.if_danger_left, 2)
-#adfset1.addPrimitive(snake.if_danger_two_up, 2)
-#adfset1.addPrimitive(snake.if_danger_two_right, 2)
-#adfset1.addPrimitive(snake.if_danger_two_down, 2)
-#adfset1.addPrimitive(snake.if_danger_two_left, 2)
-adfset1.addPrimitive(snake.if_food_up, 2)
-adfset1.addPrimitive(snake.if_food_right, 2)
-adfset1.addPrimitive(snake.if_food_down, 2)
-adfset1.addPrimitive(snake.if_food_left, 2)
+#adfset1.addPrimitive(snake.if_danger_up, 2)
+#adfset1.addPrimitive(snake.if_danger_right, 2)
+#adfset1.addPrimitive(snake.if_danger_down, 2)
+#adfset1.addPrimitive(snake.if_danger_left, 2)
+adfset1.addPrimitive(snake.if_danger_two_up, 2)
+adfset1.addPrimitive(snake.if_danger_two_right, 2)
+adfset1.addPrimitive(snake.if_danger_two_down, 2)
+adfset1.addPrimitive(snake.if_danger_two_left, 2)
+#adfset1.addPrimitive(snake.if_food_up, 2)
+#adfset1.addPrimitive(snake.if_food_right, 2)
+#adfset1.addPrimitive(snake.if_food_down, 2)
+#adfset1.addPrimitive(snake.if_food_left, 2)
 adfset1.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
 adfset1.addTerminal(snake.changeDirectionRight)
 adfset1.addTerminal(snake.changeDirectionDown)
@@ -481,10 +464,10 @@ pset.addPrimitive(snake.if_food_left, 2)
 #pset.addPrimitive(snake.if_wall_right, 2)
 #pset.addPrimitive(snake.if_wall_down, 2)
 #pset.addPrimitive(snake.if_wall_left, 2)
-pset.addPrimitive(snake.if_danger_up, 2)
-pset.addPrimitive(snake.if_danger_right, 2)
-pset.addPrimitive(snake.if_danger_down, 2)
-pset.addPrimitive(snake.if_danger_left, 2)
+#pset.addPrimitive(snake.if_danger_up, 2)
+#pset.addPrimitive(snake.if_danger_right, 2)
+#pset.addPrimitive(snake.if_danger_down, 2)
+#pset.addPrimitive(snake.if_danger_left, 2)
 #pset.addPrimitive(snake.if_danger_two_up, 2)
 #pset.addPrimitive(snake.if_danger_two_right, 2)
 #pset.addPrimitive(snake.if_danger_two_down, 2)
@@ -526,14 +509,6 @@ toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
 #toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genGrow, min_=1, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
-
-#MAX_HEIGHT = 17
-#toolbox.decorate("mate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
-#toolbox.decorate("mutate", gp.staticLimit(operator.attrgetter('height'), MAX_HEIGHT))
-#toolbox.decorate("mate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
-#toolbox.decorate("mutate", customStaticLimit(operator.attrgetter('height'), MAX_HEIGHT))
-#toolbox.decorate("mate", customStaticLimit(len, 100))
-#toolbox.decorate("mutate", customStaticLimit(len, 100))
 
 
 # Performs a single run of the evolutionary algorithm given a randomSeed value
