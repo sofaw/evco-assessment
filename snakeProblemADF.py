@@ -1,21 +1,23 @@
-# This code defines the agent (as in the playable version) in a way that can be called and executed from an evolutionary algorithm. The code is partial and will not execute. You need to add to the code to create an evolutionary algorithm that evolves and executes a snake agent.
 import argparse
 import curses
-import copy
-import numpy as np
-import operator
-import random
 import pickle
-from functools import partial, wraps
+import random
+from functools import partial
 
-from deap import algorithms, base, creator, gp, tools
+import numpy as np
+from deap import base, creator, gp, tools
 
-import additionalPrimitives as ap
 import resultsPlotting as rp
+
+
+def if_then_else(condition, out1, out2):
+    out1() if condition() else out2()
+
 
 S_RIGHT, S_LEFT, S_UP, S_DOWN = 0, 1, 2, 3
 XSIZE, YSIZE = 14, 14
 NFOOD = 1  # NOTE: YOU MAY NEED TO ADD A CHECK THAT THERE ARE ENOUGH SPACES LEFT FOR THE FOOD (IF THE TAIL IS VERY LONG)
+
 
 # This class can be used to create a basic player object (snake agent)
 class SnakePlayer(list):
@@ -78,33 +80,21 @@ class SnakePlayer(list):
         return self.ahead in self.body
 
     # Additional functions:
-    def if_wall_ahead(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_ahead, out1, out2)
-
-    def if_food_ahead(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_ahead, out1, out2)
-
-    def if_tail_ahead(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_ahead, out1, out2)
-
-    def sense_danger_ahead(self):
-        return self.sense_wall_ahead() or self.sense_tail_ahead()
-
-    def if_danger_ahead(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_ahead, out1, out2)
-
     def sense_food_direction_left(self):
         if len(self.food) == 0:
             return False
         return self.body[0][1] > self.food[0][1]
+
     def sense_food_direction_right(self):
         if len(self.food) == 0:
             return False
         return self.body[0][1] < self.food[0][1]
+
     def sense_food_direction_up(self):
         if len(self.food) == 0:
             return False
         return self.body[0][0] > self.food[0][0]
+
     def sense_food_direction_down(self):
         if len(self.food) == 0:
             return False
@@ -115,169 +105,149 @@ class SnakePlayer(list):
             if (self.body[0][0] == (self.body[i][0] + 1)) and (self.body[0][1] == self.body[i][1]):
                 return True
         return False
+
     def sense_tail_right(self):
         for i in range(1, len(self.body)):
             if (self.body[0][0] == self.body[i][0]) and (self.body[0][1] == self.body[i][1] - 1):
                 return True
         return False
+
     def sense_tail_down(self):
         for i in range(1, len(self.body)):
             if (self.body[0][0] == (self.body[i][0] - 1)) and (self.body[0][1] == self.body[i][1]):
                 return True
         return False
+
     def sense_tail_left(self):
         for i in range(1, len(self.body)):
             if (self.body[0][0] == self.body[i][0]) and (self.body[0][1] == self.body[i][1] + 1):
                 return True
         return False
-    def if_tail_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_tail_up, out1, out2)
-    def if_tail_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_tail_right, out1, out2)
-    def if_tail_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_tail_down, out1, out2)
-    def if_tail_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_tail_left, out1, out2)
 
     def sense_wall_up(self):
         if self.body[0][0] == 1:
-                return True
+            return True
         return False
+
     def sense_wall_right(self):
         if self.body[0][1] == (XSIZE - 2):
-                return True
+            return True
         return False
+
     def sense_wall_down(self):
         if self.body[0][0] == (YSIZE - 2):
-                return True
+            return True
         return False
+
     def sense_wall_left(self):
         if self.body[0][1] == (1):
-                return True
+            return True
         return False
-    def if_wall_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_up, out1, out2)
-    def if_wall_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_right, out1, out2)
-    def if_wall_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_down, out1, out2)
-    def if_wall_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_left, out1, out2)
-
-    def if_food_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_direction_left, out1, out2)
-    def if_food_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_direction_right, out1, out2)
-    def if_food_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_direction_up, out1, out2)
-    def if_food_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_direction_down, out1, out2)
-    def sense_current_direction_up(self):
-        return self.direction == S_UP
-    def sense_current_direction_right(self):
-        return self.direction == S_RIGHT
-    def sense_current_direction_down(self):
-        return self.direction == S_DOWN
-    def sense_current_direction_left(self):
-        return self.direction == S_LEFT
 
     def sense_danger_up(self):
         return (self.sense_wall_up() or self.sense_tail_up())
+
     def sense_danger_right(self):
         return (self.sense_wall_right() or self.sense_tail_right())
+
     def sense_danger_down(self):
         return (self.sense_wall_down() or self.sense_tail_down())
+
     def sense_danger_left(self):
         return (self.sense_wall_left() or self.sense_tail_left())
-
-    def if_danger_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_up, out1, out2)
-    def if_danger_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_right, out1, out2)
-    def if_danger_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_down, out1, out2)
-    def if_danger_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_left, out1, out2)
-
-    def if_direction_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_current_direction_left, out1, out2)
-    def if_direction_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_current_direction_right, out1, out2)
-    def if_direction_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_current_direction_up, out1, out2)
-    def if_direction_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_current_direction_down, out1, out2)
 
     def sense_tail_two_up(self):
         for i in range(1, len(self.body)):
             if (self.body[0][0] == (self.body[i][0] + 2)) and (self.body[0][1] == self.body[i][1]):
                 return True
         return False
+
     def sense_tail_two_right(self):
         for i in range(1, len(self.body)):
             if (self.body[0][0] == self.body[i][0]) and (self.body[0][1] == self.body[i][1] - 2):
                 return True
         return False
+
     def sense_tail_two_down(self):
         for i in range(1, len(self.body)):
             if (self.body[0][0] == (self.body[i][0] - 2)) and (self.body[0][1] == self.body[i][1]):
                 return True
         return False
+
     def sense_tail_two_left(self):
         for i in range(1, len(self.body)):
             if (self.body[0][0] == self.body[i][0]) and (self.body[0][1] == self.body[i][1] + 2):
                 return True
         return False
-    def if_tail_two_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_tail_two_up, out1, out2)
-    def if_tail_two_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_tail_two_right, out1, out2)
-    def if_tail_two_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_tail_two_down, out1, out2)
-    def if_tail_two_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_tail_two_left, out1, out2)
 
     def sense_wall_two_up(self):
         if self.body[0][0] == 2:
             return True
         return False
+
     def sense_wall_two_right(self):
         if self.body[0][1] == (XSIZE - 3):
             return True
         return False
+
     def sense_wall_two_down(self):
         if self.body[0][0] == (YSIZE - 3):
             return True
         return False
+
     def sense_wall_two_left(self):
         if self.body[0][1] == 2:
             return True
         return False
-    def if_wall_two_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_two_up, out1, out2)
-    def if_wall_two_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_two_right, out1, out2)
-    def if_wall_two_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_two_down, out1, out2)
-    def if_wall_two_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_wall_two_left, out1, out2)
+
     def sense_danger_two_up(self):
         return (self.sense_wall_two_up() or self.sense_tail_two_up())
+
     def sense_danger_two_right(self):
         return (self.sense_wall_two_right() or self.sense_tail_two_right())
+
     def sense_danger_two_down(self):
         return (self.sense_wall_two_down() or self.sense_tail_two_down())
+
     def sense_danger_two_left(self):
         return (self.sense_wall_two_left() or self.sense_tail_two_left())
 
+    def if_food_left(self, out1, out2):
+        return partial(if_then_else, self.sense_food_direction_left, out1, out2)
+
+    def if_food_right(self, out1, out2):
+        return partial(if_then_else, self.sense_food_direction_right, out1, out2)
+
+    def if_food_up(self, out1, out2):
+        return partial(if_then_else, self.sense_food_direction_up, out1, out2)
+
+    def if_food_down(self, out1, out2):
+        return partial(if_then_else, self.sense_food_direction_down, out1, out2)
+
+    def if_danger_up(self, out1, out2):
+        return partial(if_then_else, self.sense_danger_up, out1, out2)
+
+    def if_danger_right(self, out1, out2):
+        return partial(if_then_else, self.sense_danger_right, out1, out2)
+
+    def if_danger_down(self, out1, out2):
+        return partial(if_then_else, self.sense_danger_down, out1, out2)
+
+    def if_danger_left(self, out1, out2):
+        return partial(if_then_else, self.sense_danger_left, out1, out2)
+
     def if_danger_two_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_two_up, out1, out2)
+        return partial(if_then_else, self.sense_danger_two_up, out1, out2)
+
     def if_danger_two_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_two_right, out1, out2)
+        return partial(if_then_else, self.sense_danger_two_right, out1, out2)
+
     def if_danger_two_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_two_down, out1, out2)
+        return partial(if_then_else, self.sense_danger_two_down, out1, out2)
+
     def if_danger_two_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_left, out1, out2)
+        return partial(if_then_else, self.sense_danger_left, out1, out2)
+
 
 # This function places a food item in the environment
 def placeFood(snake):
@@ -291,6 +261,7 @@ def placeFood(snake):
 
 
 snake = SnakePlayer()
+
 
 # This outline function is the same as runGame (see below). However,
 # it displays the game graphically and thus runs slower
@@ -348,8 +319,8 @@ def displayStrategyRun(individual):
 
     curses.endwin()
 
-    #print collided
-    #print hitBounds
+    # print collided
+    # print hitBounds
     raw_input("Press to continue...")
 
     return snake.score
@@ -389,21 +360,18 @@ def runGame(individual):
             timer += 1  # timesteps since last eaten
             timeAlive += 1
 
-        totalScore += snake.score
-
-    #return totalScore,
-
     return snake.score, timeAlive
+
 
 def evalSnake(individual):
     totalScore = 0
-    numToAvg = 4
+    numToAvg = 2
     totalTimeAlive = 0
     for i in range(numToAvg):
         score, timeAlive = runGame(individual)
         totalScore += score
         totalTimeAlive += timeAlive
-    return (totalScore/numToAvg), (totalTimeAlive/numToAvg)
+    return (totalScore / numToAvg), (totalTimeAlive / numToAvg)
 
 
 # Parameters
@@ -425,10 +393,10 @@ adfset.addPrimitive(snake.if_food_up, 2)
 adfset.addPrimitive(snake.if_food_right, 2)
 adfset.addPrimitive(snake.if_food_down, 2)
 adfset.addPrimitive(snake.if_food_left, 2)
-adfset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
-adfset.addTerminal(snake.changeDirectionRight)
-adfset.addTerminal(snake.changeDirectionDown)
-adfset.addTerminal(snake.changeDirectionLeft)
+# adfset.addTerminal(snake.changeDirectionUp)
+# adfset.addTerminal(snake.changeDirectionRight)
+# adfset.addTerminal(snake.changeDirectionDown)
+# adfset.addTerminal(snake.changeDirectionLeft)
 
 adfset1 = gp.PrimitiveSet("adf1", 2)
 adfset1.addPrimitive(snake.if_danger_up, 2)
@@ -443,33 +411,18 @@ adfset1.addPrimitive(snake.if_food_up, 2)
 adfset1.addPrimitive(snake.if_food_right, 2)
 adfset1.addPrimitive(snake.if_food_down, 2)
 adfset1.addPrimitive(snake.if_food_left, 2)
-adfset1.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
-adfset1.addTerminal(snake.changeDirectionRight)
-adfset1.addTerminal(snake.changeDirectionDown)
-adfset1.addTerminal(snake.changeDirectionLeft)
+# adfset1.addTerminal(snake.changeDirectionUp)
+# adfset1.addTerminal(snake.changeDirectionRight)
+# adfset1.addTerminal(snake.changeDirectionDown)
+# adfset1.addTerminal(snake.changeDirectionLeft)
 
 
 # GP primitives and terminals
-pset = gp.PrimitiveSet("main", 0)  # No external input to the procedure since decisions are based on sensing functions
-#pset.addPrimitive(snake.if_wall_ahead, 2)
-#pset.addPrimitive(snake.if_tail_ahead, 2)
-#pset.addPrimitive(snake.if_danger_ahead, 2)
-#pset.addPrimitive(snake.if_direction_up, 2)
-#pset.addPrimitive(snake.if_direction_right, 2)
-#pset.addPrimitive(snake.if_direction_down, 2)
-#pset.addPrimitive(snake.if_direction_left, 2)
+pset = gp.PrimitiveSet("main", 0)
 pset.addPrimitive(snake.if_food_up, 2)
 pset.addPrimitive(snake.if_food_right, 2)
 pset.addPrimitive(snake.if_food_down, 2)
 pset.addPrimitive(snake.if_food_left, 2)
-#pset.addPrimitive(snake.if_tail_up, 2)
-#pset.addPrimitive(snake.if_tail_right, 2)
-#pset.addPrimitive(snake.if_tail_down, 2)
-#pset.addPrimitive(snake.if_tail_left, 2)
-#pset.addPrimitive(snake.if_wall_up, 2)
-#pset.addPrimitive(snake.if_wall_right, 2)
-#pset.addPrimitive(snake.if_wall_down, 2)
-#pset.addPrimitive(snake.if_wall_left, 2)
 pset.addPrimitive(snake.if_danger_up, 2)
 pset.addPrimitive(snake.if_danger_right, 2)
 pset.addPrimitive(snake.if_danger_down, 2)
@@ -478,7 +431,7 @@ pset.addPrimitive(snake.if_danger_two_up, 2)
 pset.addPrimitive(snake.if_danger_two_right, 2)
 pset.addPrimitive(snake.if_danger_two_down, 2)
 pset.addPrimitive(snake.if_danger_two_left, 2)
-pset.addTerminal(snake.changeDirectionUp)  # Terminals are snake movements
+pset.addTerminal(snake.changeDirectionUp)
 pset.addTerminal(snake.changeDirectionRight)
 pset.addTerminal(snake.changeDirectionDown)
 pset.addTerminal(snake.changeDirectionLeft)
@@ -490,8 +443,6 @@ psets = (pset, adfset, adfset1)
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0, 1.0))
 creator.create("Individual", list, fitness=creator.FitnessMax)
-#creator.create("adf", gp.PrimitiveTree, pset=adfset)
-#creator.create("main", gp.PrimitiveTree, pset=pset)
 creator.create("Tree", gp.PrimitiveTree)
 
 toolbox = base.Toolbox()
@@ -512,7 +463,6 @@ toolbox.register('compile', gp.compileADF, psets=psets)
 toolbox.register("evaluate", evalSnake)
 toolbox.register("select", tools.selDoubleTournament, fitness_size=3, parsimony_size=1.3, fitness_first=True)
 toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
-#toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genGrow, min_=1, max_=3)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
@@ -533,8 +483,6 @@ def single_run(randomSeed):
 
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
-
-    #CXPB, MUTPB, NGEN = 0.5, 0.2, 40
 
     # Evaluate the entire population
     for ind in pop:
@@ -562,41 +510,37 @@ def single_run(randomSeed):
         for ind in offspring:
             for tree, pset in zip(ind, psets):
                 if random.random() < MUTPB:
-                    #try:
+                    # try:
                     #    toolbox.mutate(individual=tree, pset=pset)
                     #    del ind.fitness.values
-                    #except IndexError:
+                    # except IndexError:
                     #    print("Index error!!")
                     #    rp.plot_decision_graph(tree, "errors/ex.pdf")
                     toolbox.mutate(individual=tree, pset=pset)
                     del ind.fitness.values
 
         # Evaluate the individuals with an invalid fitness
-        #invalids = [ind for ind in offspring if not ind.fitness.valid]
-        #for ind in invalids:
-        #    ind.fitness.values = toolbox.evaluate(ind)
         invalids = 0
         MAX_HEIGHT = 9
         for i in range(len(offspring)):
             for j in range(len(offspring[i])):
                 if offspring[i][j].height > MAX_HEIGHT:
-                    offspring[i][j] = toolbox.clone(pop[i][j]) # Replace child that is too big with parent
+                    offspring[i][j] = toolbox.clone(pop[i][j])  # Replace child that is too big with parent
             if not offspring[i].fitness.valid:
                 invalids += 1
                 offspring[i].fitness.values = toolbox.evaluate(offspring[i])
-
 
         # Replacement of the population by the offspring
         pop = offspring
         hof.update(pop)
         record = stats.compile(pop)
-        #logbook.record(gen=g, evals=len(invalids), **record)
         logbook.record(gen=g, evals=invalids, **record)
         print(logbook.stream)
 
     print('Best individual : ', hof[0][0], hof[0].fitness)
 
     return pop, stats, logbook, hof
+
 
 def run_n_times(numRuns):
     pops = [None] * numRuns  # Contains the final population for each run of the algorithm
