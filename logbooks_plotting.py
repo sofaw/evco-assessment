@@ -18,7 +18,7 @@ def plot_max_from_logbooks(logbooks_path_list, colours_list, label_list):
     fig, ax1 = plt.subplots()
 
     ax1.set_xlabel("Generation")
-    ax1.set_ylabel("Fitness")
+    ax1.set_ylabel("Maximum fitness")
 
     lines = []
 
@@ -60,7 +60,7 @@ def plot_box_and_whisker_from_logbooks(logbooks_path_list, colours_list):
     fig, ax1 = plt.subplots()
 
     ax1.set_xlabel("Generation")
-    ax1.set_ylabel("Fitness")
+    ax1.set_ylabel("Maximum fitness")
 
     for i in range(len(logbooks_path_list)):
         logbooks = pickle.load(open(logbooks_path_list[i], "rb"))
@@ -68,8 +68,11 @@ def plot_box_and_whisker_from_logbooks(logbooks_path_list, colours_list):
 
     plt.show()
 
-
 # Testing
 #plot_max_from_logbooks(["dumps/logbook.p", "dumps/adf_logbook.p"], ["y", "b"], ["Without ADF", "ADF"])
 #plot_box_and_whisker_from_logbooks(["dumps/logbook.p", "dumps/adf_logbook.p", "dumps/test.p"], ["y", "b", "m"])
-#plot_box_and_whisker_from_logbooks(["dumps/logbook.p"], ["y"])
+#plot_box_and_whisker_from_logbooks(["dumps/logbook.p", "dumps/test_2.p"], ["y", "b"])
+#plot_box_and_whisker_from_logbooks(["results_stats_non_ADF/fifth_iter_sense_curr_direction.p"],
+#                                   ["g"])
+plot_box_and_whisker_from_logbooks(["results_stats_ADF/10_iter_terminals.p"],
+                                   ["g"])
