@@ -1,9 +1,11 @@
-from scipy.stats import mannwhitneyu, ranksums
 import pickle
 
+from scipy.stats import mannwhitneyu
+
+
 def column(matrix, i):
-    return [row[i] for row in matrix]  #https://stackoverflow.com/questions/903853/how-do-you-extract-a-column-from-a
-    # -multi-dimensional-array
+    return [row[i] for row in matrix]
+
 
 def get_final_gen_max(logbook):
     numGens = len(logbook[0])
@@ -13,7 +15,8 @@ def get_final_gen_max(logbook):
     for i in range(numRuns):
         fit_max_by_run[i] = logbook[i].select("max")
 
-    return column(fit_max_by_run, numGens-1)
+    return column(fit_max_by_run, numGens - 1)
+
 
 def eval_mannwhitney(logbook_a_path, logbook_b_path):
     logbook_a = pickle.load(open(logbook_a_path, "rb"))
@@ -26,12 +29,13 @@ def eval_mannwhitney(logbook_a_path, logbook_b_path):
     print stat
     print pvalue
 
+
 def calc_ranksum(a, b):
     m = len(a)
     n = len(b)
 
     ordered = sorted(a + b)
-    rank_map = {} # Maps a value to its rank e.g. {3 : 1, 4 : 2, 5: 3.5}
+    rank_map = {}  # Maps a value to its rank e.g. {3 : 1, 4 : 2, 5: 3.5}
     current_rank = 1
     i = 0
     while i < len(ordered):
@@ -44,8 +48,8 @@ def calc_ranksum(a, b):
 
         i = j
 
-        rank_map[curr] = current_rank + (0.5*dups)
-        current_rank += 1 + (1*dups)
+        rank_map[curr] = current_rank + (0.5 * dups)
+        current_rank += 1 + (1 * dups)
 
     ranksum_a = 0
     for i in range(len(a)):
@@ -69,73 +73,3 @@ def effect_size(logbook_a_path, logbook_b_path):
     n = float(len(final_gen_max_b))
 
     return float((ranksum_a / m - (m + 1) / 2.0) / n)
-
-
-
-# Compare syntax tree versions
-print "v1 vs v2"
-eval_mannwhitney("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/ninth_iter_two_danger.p")
-print "v1 vs v3"
-eval_mannwhitney("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/tenth_iter_reduce_timeouts.p")
-print "v1 vs v4"
-eval_mannwhitney("results_stats_non_ADF/seventh_iter_genGrow.p",
-                 "results_stats_non_ADF/eleventh_iter_local_food_sensing.p")
-print "v1 vs v5"
-eval_mannwhitney("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/twelth_iter_more_mutation.p")
-print "v1 vs v6"
-eval_mannwhitney("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/14_iter_time_alive.p")
-print "v6 vs v1"
-eval_mannwhitney("results_stats_non_ADF/14_iter_time_alive.p", "results_stats_non_ADF/seventh_iter_genGrow.p")
-
-# Compare ADF tree versions
-print "v1 vs v2"
-eval_mannwhitney("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/5_iter_reduce_bloat_control.p")
-print "v1 vs v3"
-eval_mannwhitney("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/6_iter_sep_danger.p")
-print "v1 vs v4"
-eval_mannwhitney("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/7_iter_remove_terminals.p")
-print "v1 vs v5"
-eval_mannwhitney("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/8_iter_time_alive.p")
-print "v1 vs v6"
-eval_mannwhitney("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/9_iter_no_terminals.p")
-print "v6 vs v1"
-eval_mannwhitney("results_stats_ADF/9_iter_no_terminals.p", "results_stats_ADF/4_iter_all_food_dirs.p")
-
-# Compare syntax tree to ADF representation
-print "syntax tree vs adf"
-eval_mannwhitney("results_stats_non_ADF/14_iter_time_alive.p", "results_stats_ADF/9_iter_no_terminals.p")
-
-# Calculate effect size of difference
-print effect_size("results_stats_non_ADF/14_iter_time_alive.p", "results_stats_ADF/9_iter_no_terminals.p")
-
-
-print "Effect size for syntax tree"
-
-# Compare syntax tree versions
-print "v1 vs v2"
-print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/ninth_iter_two_danger.p")
-print "v1 vs v3"
-print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/tenth_iter_reduce_timeouts.p")
-print "v1 vs v4"
-print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p",
-                 "results_stats_non_ADF/eleventh_iter_local_food_sensing.p")
-print "v1 vs v5"
-print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/twelth_iter_more_mutation.p")
-print "v1 vs v6"
-print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/14_iter_time_alive.p")
-print "v6 vs v1"
-print effect_size("results_stats_non_ADF/14_iter_time_alive.p", "results_stats_non_ADF/seventh_iter_genGrow.p")
-
-print "Effect size for ADF"
-print "v1 vs v2"
-print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/5_iter_reduce_bloat_control.p")
-print "v1 vs v3"
-print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/6_iter_sep_danger.p")
-print "v1 vs v4"
-print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/7_iter_remove_terminals.p")
-print "v1 vs v5"
-print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/8_iter_time_alive.p")
-print "v1 vs v6"
-print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/9_iter_no_terminals.p")
-print "v6 vs v1"
-print effect_size("results_stats_ADF/9_iter_no_terminals.p", "results_stats_ADF/4_iter_all_food_dirs.p")

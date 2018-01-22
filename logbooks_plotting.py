@@ -1,5 +1,7 @@
 import pickle
+
 import matplotlib.pyplot as plt
+
 
 def get_line(logbooks, colour, label, axis):
     numGens = len(logbooks[0])
@@ -31,9 +33,9 @@ def plot_max_from_logbooks(logbooks_path_list, colours_list, label_list):
 
     plt.show()
 
+
 def column(matrix, i):
-    return [row[i] for row in matrix]  #https://stackoverflow.com/questions/903853/how-do-you-extract-a-column-from-a
-    # -multi-dimensional-array
+    return [row[i] for row in matrix]
 
 
 def gen_boxplot(logbooks, colour, plot):
@@ -55,7 +57,6 @@ def gen_boxplot(logbooks, colour, plot):
         patch.set_facecolor(colour)
 
 
-
 def plot_box_and_whisker_from_logbooks(logbooks_path_list, colours_list):
     fig, ax1 = plt.subplots()
 
@@ -67,12 +68,3 @@ def plot_box_and_whisker_from_logbooks(logbooks_path_list, colours_list):
         gen_boxplot(logbooks, colours_list[i], plt)
 
     plt.show()
-
-# Testing
-#plot_max_from_logbooks(["dumps/logbook.p", "dumps/adf_logbook.p"], ["y", "b"], ["Without ADF", "ADF"])
-#plot_box_and_whisker_from_logbooks(["dumps/logbook.p", "dumps/adf_logbook.p", "dumps/test.p"], ["y", "b", "m"])
-#plot_box_and_whisker_from_logbooks(["dumps/logbook.p", "dumps/test_2.p"], ["y", "b"])
-#plot_box_and_whisker_from_logbooks(["results_stats_non_ADF/fifth_iter_sense_curr_direction.p"],
-#                                   ["g"])
-plot_box_and_whisker_from_logbooks(["results_stats_ADF/10_iter_terminals.p"],
-                                   ["g"])
