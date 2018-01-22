@@ -7,7 +7,6 @@ from functools import partial
 import numpy as np
 from deap import base, creator, gp, tools
 
-import additionalPrimitives as ap
 import resultsPlotting as rp
 
 
