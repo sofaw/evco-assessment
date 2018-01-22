@@ -10,6 +10,11 @@ from deap import base, creator, gp, tools
 import additionalPrimitives as ap
 import resultsPlotting as rp
 
+
+def if_then_else(condition, out1, out2):
+    out1() if condition() else out2()
+
+
 S_RIGHT, S_LEFT, S_UP, S_DOWN = 0, 1, 2, 3
 XSIZE, YSIZE = 14, 14
 NFOOD = 1  # NOTE: YOU MAY NEED TO ADD A CHECK THAT THERE ARE ENOUGH SPACES LEFT FOR THE FOOD (IF THE TAIL IS VERY LONG)
@@ -229,52 +234,52 @@ class SnakePlayer(list):
         return food[0] == head[0] and food[1] == (head[1] - 1)
 
     def if_food_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_direction_left, out1, out2)
+        return partial(if_then_else, self.sense_food_direction_left, out1, out2)
 
     def if_food_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_direction_right, out1, out2)
+        return partial(if_then_else, self.sense_food_direction_right, out1, out2)
 
     def if_food_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_direction_up, out1, out2)
+        return partial(if_then_else, self.sense_food_direction_up, out1, out2)
 
     def if_food_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_direction_down, out1, out2)
+        return partial(if_then_else, self.sense_food_direction_down, out1, out2)
 
     def if_danger_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_up, out1, out2)
+        return partial(if_then_else, self.sense_danger_up, out1, out2)
 
     def if_danger_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_right, out1, out2)
+        return partial(if_then_else, self.sense_danger_right, out1, out2)
 
     def if_danger_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_down, out1, out2)
+        return partial(if_then_else, self.sense_danger_down, out1, out2)
 
     def if_danger_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_left, out1, out2)
+        return partial(if_then_else, self.sense_danger_left, out1, out2)
 
     def if_danger_two_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_two_up, out1, out2)
+        return partial(if_then_else, self.sense_danger_two_up, out1, out2)
 
     def if_danger_two_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_two_right, out1, out2)
+        return partial(if_then_else, self.sense_danger_two_right, out1, out2)
 
     def if_danger_two_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_two_down, out1, out2)
+        return partial(if_then_else, self.sense_danger_two_down, out1, out2)
 
     def if_danger_two_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_danger_left, out1, out2)
+        return partial(if_then_else, self.sense_danger_left, out1, out2)
 
     def if_food_one_up(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_one_up, out1, out2)
+        return partial(if_then_else, self.sense_food_one_up, out1, out2)
 
     def if_food_one_right(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_one_right, out1, out2)
+        return partial(if_then_else, self.sense_food_one_right, out1, out2)
 
     def if_food_one_down(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_one_down, out1, out2)
+        return partial(if_then_else, self.sense_food_one_down, out1, out2)
 
     def if_food_one_left(self, out1, out2):
-        return partial(ap.if_then_else, self.sense_food_one_left, out1, out2)
+        return partial(if_then_else, self.sense_food_one_left, out1, out2)
 
 
 # This function places a food item in the environment
