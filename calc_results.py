@@ -107,3 +107,35 @@ eval_mannwhitney("results_stats_non_ADF/14_iter_time_alive.p", "results_stats_AD
 
 # Calculate effect size of difference
 print effect_size("results_stats_non_ADF/14_iter_time_alive.p", "results_stats_ADF/9_iter_no_terminals.p")
+
+
+print "Effect size for syntax tree"
+
+# Compare syntax tree versions
+print "v1 vs v2"
+print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/ninth_iter_two_danger.p")
+print "v1 vs v3"
+print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/tenth_iter_reduce_timeouts.p")
+print "v1 vs v4"
+print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p",
+                 "results_stats_non_ADF/eleventh_iter_local_food_sensing.p")
+print "v1 vs v5"
+print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/twelth_iter_more_mutation.p")
+print "v1 vs v6"
+print effect_size("results_stats_non_ADF/seventh_iter_genGrow.p", "results_stats_non_ADF/14_iter_time_alive.p")
+print "v6 vs v1"
+print effect_size("results_stats_non_ADF/14_iter_time_alive.p", "results_stats_non_ADF/seventh_iter_genGrow.p")
+
+print "Effect size for ADF"
+print "v1 vs v2"
+print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/5_iter_reduce_bloat_control.p")
+print "v1 vs v3"
+print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/6_iter_sep_danger.p")
+print "v1 vs v4"
+print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/7_iter_remove_terminals.p")
+print "v1 vs v5"
+print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/8_iter_time_alive.p")
+print "v1 vs v6"
+print effect_size("results_stats_ADF/4_iter_all_food_dirs.p", "results_stats_ADF/9_iter_no_terminals.p")
+print "v6 vs v1"
+print effect_size("results_stats_ADF/9_iter_no_terminals.p", "results_stats_ADF/4_iter_all_food_dirs.p")
