@@ -7,7 +7,7 @@ from functools import partial
 import numpy as np
 from deap import base, creator, gp, tools
 
-import resultsPlotting as rp
+import logbooks_plotting as lp
 
 
 def if_then_else(condition, out1, out2):
@@ -558,7 +558,7 @@ def main():
                 top_n = tools.selBest(pops[i], numDecisionGraphs)
                 for j in range(numDecisionGraphs):
                     filename = "decision/run_" + str(i) + "_num_" + str(j) + ".pdf"
-                    rp.plot_decision_graph(top_n[j], filename)
+                    lp.plot_decision_graph(top_n[j], filename)
 
         # Display strategies
         numStrategyRuns = args.display_strategy_runs
@@ -578,7 +578,7 @@ def main():
             top_n = tools.selBest(pop, numDecisionGraphs)
             for j in range(numDecisionGraphs):
                 filename = "single_decision/seed_" + str(args.single_run_seed) + "_" + str(j) + ".pdf"
-                rp.plot_decision_graph(top_n[j], filename)
+                lp.plot_decision_graph(top_n[j], filename)
 
         numStrategyRuns = args.display_strategy_runs
         if numStrategyRuns > 0:

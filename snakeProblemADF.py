@@ -7,7 +7,7 @@ from functools import partial
 import numpy as np
 from deap import base, creator, gp, tools
 
-import resultsPlotting as rp
+import logbooks_plotting as lp
 
 
 def if_then_else(condition, out1, out2):
@@ -510,12 +510,6 @@ def single_run(randomSeed):
         for ind in offspring:
             for tree, pset in zip(ind, psets):
                 if random.random() < MUTPB:
-                    # try:
-                    #    toolbox.mutate(individual=tree, pset=pset)
-                    #    del ind.fitness.values
-                    # except IndexError:
-                    #    print("Index error!!")
-                    #    rp.plot_decision_graph(tree, "errors/ex.pdf")
                     toolbox.mutate(individual=tree, pset=pset)
                     del ind.fitness.values
 
@@ -596,7 +590,7 @@ def main():
                     filepath = "adf_decisions/run_" + str(i) + "_num_" + str(j)
                     for k in range(len(top_n[j])):
                         filename = filepath + "_" + str(k) + "_" + ".pdf"
-                        rp.plot_decision_graph(top_n[j][k], filename)
+                        lp.plot_decision_graph(top_n[j][k], filename)
 
         # Display strategies
         numStrategyRuns = args.display_strategy_runs
@@ -618,7 +612,7 @@ def main():
                 filepath = "single_decision/seed_" + str(args.single_run_seed) + "_num_" + str(j)
                 for k in range(len(top_n[j])):
                     filename = filepath + "_" + str(k) + "_" + ".pdf"
-                    rp.plot_decision_graph(top_n[j][k], filename)
+                    lp.plot_decision_graph(top_n[j][k], filename)
 
         numStrategyRuns = args.display_strategy_runs
         if numStrategyRuns > 0:

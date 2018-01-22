@@ -1,6 +1,7 @@
 import pickle
 
 import matplotlib.pyplot as plt
+import pygraphviz as pgv
 
 
 def get_line(logbooks, colour, label, axis):
@@ -68,3 +69,16 @@ def plot_box_and_whisker_from_logbooks(logbooks_path_list, colours_list):
         gen_boxplot(logbooks, colours_list[i], plt)
 
     plt.show()
+
+
+def plot_decision_graph(individual, filename="snake_tree.pdf"):
+    nodes, edges, labels = gp.graph(individual)
+
+    g = pgv.AGraph(nodesep=3.0, fontsize=5)
+    g.add_nodes_from(nodes)
+    g.add_edges_from(edges)
+    g.layout(prog="dot")
+    for i in nodes:
+        n = g.get_node(i)
+        n.attr["label"] = labels[i]
+    g.draw(filename)
